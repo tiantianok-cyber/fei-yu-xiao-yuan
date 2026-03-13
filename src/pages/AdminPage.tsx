@@ -29,10 +29,9 @@ const AdminPage: React.FC = () => {
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .maybeSingle()
+      .in('role', ['admin', 'moderator'])
       .then(({ data }) => {
-        if (!data) {
+        if (!data || data.length === 0) {
           toast.error('无管理员权限');
           navigate('/');
         } else {
