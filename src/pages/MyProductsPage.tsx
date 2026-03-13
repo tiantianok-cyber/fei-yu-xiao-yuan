@@ -30,6 +30,16 @@ interface MyProduct {
   type: string;
   view_count: number;
   created_at: string;
+  author: string | null;
+  translator: string | null;
+  publisher: string | null;
+  publish_date: string | null;
+  grade: string[] | null;
+  semester: string | null;
+  book_tag: string | null;
+  condition: string;
+  description: string | null;
+  school: string | null;
 }
 
 const MyProductsPage: React.FC = () => {
