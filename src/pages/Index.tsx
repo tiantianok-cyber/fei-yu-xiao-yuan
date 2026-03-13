@@ -185,14 +185,25 @@ const Index: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [cityUserIds, setCityUserIds] = useState<string[] | null>(null);
 
-  // Initialize from profile
+  // Initialize from profile (only if no saved filters)
   useEffect(() => {
+    if (profileInitialized) return;
     if (profile) {
       if (profile.city) setFilterCity(profile.city);
       if (profile.district) setFilterDistrict(profile.district);
       if (profile.province) setFilterProvince(profile.province);
+      setProfileInitialized(true);
     }
-  }, [profile]);
+  }, [profile, profileInitialized]);
+
+  // Save filters to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
+      filterProvince, filterCity, filterDistrict,
+      filterType, filterGrade, filterSemester, filterCondition,
+      filterSchools, filterCommunities,
+    }));
+  }, [filterProvince, filterCity, filterDistrict, filterType, filterGrade, filterSemester, filterCondition, filterSchools, filterCommunities]);
 
   // Load users in selected city/district → derive cityUserIds
   useEffect(() => {
