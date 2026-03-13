@@ -154,6 +154,33 @@ const MyProductsPage: React.FC = () => {
                         </button>
                       </>
                     )}
+                    {product.status === 'sold' && (
+                      <button
+                        onClick={() => {
+                          sessionStorage.setItem('prefill_product', JSON.stringify({
+                            type: product.type,
+                            name: product.name,
+                            author: product.author,
+                            translator: product.translator,
+                            publisher: product.publisher,
+                            publish_date: product.publish_date,
+                            grade: product.grade,
+                            semester: product.semester,
+                            book_tag: product.book_tag,
+                            cover_image_url: product.cover_image_url,
+                            condition: product.condition,
+                            description: product.description,
+                            price: product.price,
+                            school: product.school,
+                          }));
+                          navigate('/publish');
+                          toast({ title: '已复制物品信息到发布页' });
+                        }}
+                        className="text-xs text-primary hover:text-primary/80 flex items-center gap-0.5"
+                      >
+                        <RefreshCw className="h-3 w-3" />重新发布
+                      </button>
+                    )}
                     {product.status !== 'in_trade' && product.status !== 'sold' && (
                       <button
                         onClick={() => setDeleteId(product.id)}
