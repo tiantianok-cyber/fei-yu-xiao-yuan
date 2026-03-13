@@ -325,8 +325,11 @@ const CartPage: React.FC = () => {
                             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>
                           )}
                           <p className="text-primary font-bold text-sm mt-1">¥{item.price}</p>
-                          {item.status !== 'on_sale' && (
-                            <span className="text-xs text-destructive">已下架或交易中</span>
+                          {item.status === 'in_trade' && (
+                            <Badge className="bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0">交易中</Badge>
+                          )}
+                          {item.status !== 'on_sale' && item.status !== 'in_trade' && (
+                            <span className="text-xs text-destructive">已下架</span>
                           )}
                         </div>
                         <button
