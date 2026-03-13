@@ -176,13 +176,17 @@ const RegisterForm: React.FC<{ onSwitchToLogin: () => void }> = ({ onSwitchToLog
         {/* 5. Community */}
         <div className="space-y-1.5">
           <Label htmlFor="reg-community">小区名称</Label>
-          <Input
-            id="reg-community"
-            placeholder="请输入小区名称"
-            value={form.community}
-            onChange={(e) => updateForm('community', e.target.value)}
-            maxLength={50}
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="reg-community"
+              placeholder="请输入小区名称"
+              value={form.community}
+              onChange={(e) => updateForm('community', e.target.value)}
+              maxLength={50}
+              className="flex-1"
+            />
+            <AMapLocationPicker type="community" onConfirm={(name) => updateForm('community', name)} />
+          </div>
           <p className="text-xs text-muted-foreground">请填写完整的小区名称，建议以地图App上的名称为准，方便附近家长精准查找到您发布的闲置物品</p>
         </div>
 
