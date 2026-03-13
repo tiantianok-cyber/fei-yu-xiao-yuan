@@ -13,11 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GradeSemesterSelector } from '@/components/auth/GradeSemesterSelector';
 
 const CONDITIONS = [
-  { value: 'brand_new', label: '全新', desc: '未使用，包装完好' },
-  { value: 'almost_new', label: '几乎全新', desc: '仅翻阅，无笔记折痕' },
-  { value: 'slightly_used', label: '轻微使用', desc: '少量笔记，整体良好' },
-  { value: 'used', label: '使用过', desc: '有笔记标注，不影响阅读' },
-  { value: 'heavily_used', label: '大量使用', desc: '较多笔记磨损，可正常使用' },
+  { value: 'brand_new', label: '全新', desc: '未拆封' },
+  { value: 'almost_new', label: '九九新', desc: '仅使用一次，无破损' },
+  { value: 'slightly_used', label: '九五新', desc: '仅有翻阅痕迹' },
+  { value: 'used', label: '九成新', desc: '轻度污渍和（或）少量标注' },
+  { value: 'heavily_used', label: '九成新以下', desc: '有较重污渍和（或）有标注' },
 ];
 
 const BOOK_TAGS = ['学校推荐', '课外书', '教材教辅', '兴趣书', '工具书', '绘本', '课外读物', '其他'];

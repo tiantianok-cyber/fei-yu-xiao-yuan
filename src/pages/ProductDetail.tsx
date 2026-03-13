@@ -9,11 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
 const CONDITIONS: Record<string, { label: string; desc: string }> = {
-  brand_new: { label: '全新', desc: '未使用，包装完好' },
-  almost_new: { label: '几乎全新', desc: '仅翻阅，无笔记折痕' },
-  slightly_used: { label: '轻微使用', desc: '少量笔记，整体良好' },
-  used: { label: '使用过', desc: '有笔记标注，不影响阅读' },
-  heavily_used: { label: '大量使用', desc: '较多笔记磨损，可正常使用' },
+  brand_new: { label: '全新', desc: '未拆封' },
+  almost_new: { label: '九九新', desc: '仅使用一次，无破损' },
+  slightly_used: { label: '九五新', desc: '仅有翻阅痕迹' },
+  used: { label: '九成新', desc: '轻度污渍和（或）少量标注' },
+  heavily_used: { label: '九成新以下', desc: '有较重污渍和（或）有标注' },
 };
 
 interface Product {
