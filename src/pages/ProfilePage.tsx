@@ -228,7 +228,7 @@ const ProfilePage: React.FC = () => {
             <GradeSemesterSelector
               grades={childGrade ? [childGrade] : []}
               semester={childSemester}
-              onChange={(g, s) => { setChildGrade(g[0] || ''); setChildSemester(s); }}
+              onChange={(g, s) => { setChildGrade(g.length > 0 ? g[g.length - 1] : ''); setChildSemester(s); }}
             />
           </div>
 
