@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { CitySelector } from '@/components/auth/CitySelector';
 import { GradeSemesterSelector } from '@/components/auth/GradeSemesterSelector';
+import AMapLocationPicker from '@/components/AMapLocationPicker';
 
 const normalizeGradeLabel = (grade: string) => {
   const gradeMap: Record<string, string> = {
@@ -215,12 +216,18 @@ const ProfilePage: React.FC = () => {
 
           <div className="space-y-1.5">
             <Label className="text-xs">小区</Label>
-            <Input value={community} onChange={e => setCommunity(e.target.value)} placeholder="输入小区名称" />
+            <div className="flex items-center gap-2">
+              <Input value={community} onChange={e => setCommunity(e.target.value)} placeholder="输入小区名称" className="flex-1" />
+              <AMapLocationPicker type="community" onConfirm={(name) => setCommunity(name)} />
+            </div>
           </div>
 
           <div className="space-y-1.5">
             <Label className="text-xs">学校</Label>
-            <Input value={school} onChange={e => setSchool(e.target.value)} placeholder="输入学校名称" />
+            <div className="flex items-center gap-2">
+              <Input value={school} onChange={e => setSchool(e.target.value)} placeholder="输入学校名称" className="flex-1" />
+              <AMapLocationPicker type="school" onConfirm={(name) => setSchool(name)} />
+            </div>
           </div>
 
           <div className="space-y-1.5">

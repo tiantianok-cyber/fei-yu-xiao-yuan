@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { CitySelector } from '@/components/auth/CitySelector';
 import { GradeSemesterSelector } from '@/components/auth/GradeSemesterSelector';
+import AMapLocationPicker from '@/components/AMapLocationPicker';
 import {
   Dialog,
   DialogContent,
@@ -175,26 +176,34 @@ const RegisterForm: React.FC<{ onSwitchToLogin: () => void }> = ({ onSwitchToLog
         {/* 5. Community */}
         <div className="space-y-1.5">
           <Label htmlFor="reg-community">小区名称</Label>
-          <Input
-            id="reg-community"
-            placeholder="请输入小区名称"
-            value={form.community}
-            onChange={(e) => updateForm('community', e.target.value)}
-            maxLength={50}
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="reg-community"
+              placeholder="请输入小区名称"
+              value={form.community}
+              onChange={(e) => updateForm('community', e.target.value)}
+              maxLength={50}
+              className="flex-1"
+            />
+            <AMapLocationPicker type="community" onConfirm={(name) => updateForm('community', name)} />
+          </div>
           <p className="text-xs text-muted-foreground">请填写完整的小区名称，建议以地图App上的名称为准，方便附近家长精准查找到您发布的闲置物品</p>
         </div>
 
         {/* 6. School */}
         <div className="space-y-1.5">
           <Label htmlFor="reg-school">孩子就读学校</Label>
-          <Input
-            id="reg-school"
-            placeholder="请输入学校名称"
-            value={form.school}
-            onChange={(e) => updateForm('school', e.target.value)}
-            maxLength={50}
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="reg-school"
+              placeholder="请输入学校名称"
+              value={form.school}
+              onChange={(e) => updateForm('school', e.target.value)}
+              maxLength={50}
+              className="flex-1"
+            />
+            <AMapLocationPicker type="school" onConfirm={(name) => updateForm('school', name)} />
+          </div>
           <p className="text-xs text-muted-foreground">请填写完整的学校名称，建议以地图App上的名称为准，方便附近家长精准查找到您发布的闲置物品</p>
         </div>
 
