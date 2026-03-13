@@ -65,10 +65,20 @@ const PublishPage: React.FC = () => {
     }
   }, []);
 
+  // Map old grade names to new ones
+  const normalizeGrade = (g: string): string => {
+    const map: Record<string, string> = {
+      '小学一年级': '一年级', '小学二年级': '二年级', '小学三年级': '三年级',
+      '小学四年级': '四年级', '小学五年级': '五年级', '小学六年级': '六年级',
+      '初一': '七年级', '初二': '八年级', '初三': '九年级',
+    };
+    return map[g] || g;
+  };
+
   // Default school/grade/semester from profile
   useEffect(() => {
     if (profile?.school && !school) setSchool(profile.school);
-    if (profile?.child_grade && grades.length === 0) setGrades([profile.child_grade]);
+    if (profile?.child_grade && grades.length === 0) setGrades([normalizeGrade(profile.child_grade)]);
     if (profile?.child_semester && !semester) setSemester(profile.child_semester);
   }, [profile]);
 
