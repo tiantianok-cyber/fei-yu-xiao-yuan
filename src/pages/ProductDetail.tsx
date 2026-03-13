@@ -313,6 +313,14 @@ const ProductDetail: React.FC = () => {
           </div>
         </div>
       </div>
+      {/* Image preview dialog */}
+      {product.cover_image_url && (
+        <Dialog open={showImage} onOpenChange={setShowImage}>
+          <DialogContent className="max-w-3xl p-2 bg-black/90 border-none">
+            <img src={product.cover_image_url} alt={product.name} className="w-full h-auto object-contain max-h-[85vh] rounded" />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
