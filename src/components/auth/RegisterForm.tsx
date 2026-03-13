@@ -264,9 +264,9 @@ const RegisterForm: React.FC<{ onSwitchToLogin: () => void }> = ({ onSwitchToLog
             <p>用户仅可上架正版书籍，严禁上架盗版、影印版书籍。校服等物品需确保为正品。一经发现违规，平台有权立即下架相关物品并对账号进行警告、限制或封禁处理。</p>
             <h4 className="font-medium text-foreground">四、隐私保护</h4>
             <p>平台对用户的手机号等个人信息进行脱敏处理，仅在交易双方确认后才展示完整联系方式。用户信息仅用于平台服务，不会提供给第三方。平台提供的定位功能仅用于方便用户快速选择所在城市、小区及学校，不会将定位信息用于其他任何用途。</p>
-            <h4 className="font-medium text-foreground">四、免责声明</h4>
+            <h4 className="font-medium text-foreground">五、免责声明</h4>
             <p>平台仅提供信息展示服务，不对物品质量、交易纠纷承担责任。请交易双方在线下交易时当面验货。建议优先选择社区内、学校附近的面交方式。</p>
-            <h4 className="font-medium text-foreground">五、协议变更</h4>
+            <h4 className="font-medium text-foreground">六、协议变更</h4>
             <p>平台有权根据需要修改本协议，修改后的协议在平台公布后即时生效。</p>
           </div>
           <Button onClick={() => setShowAgreement(false)} className="w-full">
