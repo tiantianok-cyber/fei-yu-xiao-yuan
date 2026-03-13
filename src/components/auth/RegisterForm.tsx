@@ -212,8 +212,11 @@ const RegisterForm: React.FC<{ onSwitchToLogin: () => void }> = ({ onSwitchToLog
             grades={form.childGrade ? [form.childGrade] : []}
             semester={form.childSemester}
             onChange={(g, s) => {
-              updateForm('childGrade', g.length > 0 ? g[g.length - 1] : '');
-              updateForm('childSemester', s);
+              setForm(prev => ({
+                ...prev,
+                childGrade: g.length > 0 ? g[g.length - 1] : '',
+                childSemester: s,
+              }));
             }}
           />
           <p className="text-xs text-muted-foreground">选择孩子当前的年级和学期，系统将自动优先展示匹配的物品。小初高在每年3月1日和9月1日自动升级学期</p>
