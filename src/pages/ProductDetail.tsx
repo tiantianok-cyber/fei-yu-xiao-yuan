@@ -174,8 +174,10 @@ const ProductDetail: React.FC = () => {
     { label: '适用学校', value: product.school },
     { label: '年级', value: product.grade?.join('、') },
     { label: '学期', value: product.semester },
-    { label: '成色', value: cond ? `${cond.label} · ${cond.desc}` : null },
-    { label: '成色说明', value: product.condition_note },
+    ...(product.type === 'book' ? [
+      { label: '成色', value: cond ? `${cond.label} · ${cond.desc}` : null },
+      { label: '成色说明', value: product.condition_note },
+    ] : []),
     { label: '浏览量', value: String(product.view_count) },
   ].filter(r => r.value);
 
