@@ -36,6 +36,8 @@ interface SellerInfo {
   phone: string;
   community: string | null;
   school: string | null;
+  city: string | null;
+  district: string | null;
 }
 
 const CartPage: React.FC = () => {
