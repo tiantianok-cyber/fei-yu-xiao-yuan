@@ -35,19 +35,27 @@ const LoginForm: React.FC<{ onSwitchToRegister: () => void }> = ({ onSwitchToReg
     setLoading(true);
     try {
       const email = `${phone}@flyfly.local`;
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         toast({ title: '登录失败', description: error.message === 'Invalid login credentials' ? '手机号或密码错误' : error.message, variant: 'destructive' });
       } else {
+        // Check if account is disabled
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('status')
+          .eq('user_id', signInData.user.id)
+          .single();
+        if (profileData?.status === 'disabled') {
+          await supabase.auth.signOut();
+          toast({ title: '登录失败', description: '账号已被禁用，如有疑问请联系客服', variant: 'destructive' });
+          return;
+        }
         // Log login
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await supabase.from('login_logs').insert({
-              user_id: user.id,
-              device: navigator.userAgent.slice(0, 200),
-            });
-          }
+          await supabase.from('login_logs').insert({
+            user_id: signInData.user.id,
+            device: navigator.userAgent.slice(0, 200),
+          });
         } catch {}
         toast({ title: '登录成功' });
         navigate(from, { replace: true });
