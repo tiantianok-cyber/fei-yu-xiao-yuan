@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { CitySelector } from '@/components/auth/CitySelector';
 import { GradeSemesterSelector } from '@/components/auth/GradeSemesterSelector';
+import AMapLocationPicker from '@/components/AMapLocationPicker';
 import {
   Dialog,
   DialogContent,
