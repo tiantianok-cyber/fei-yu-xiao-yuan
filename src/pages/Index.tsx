@@ -175,7 +175,7 @@ const Index: React.FC = () => {
   const [filterCondition, setFilterCondition] = useState<string>(saved?.filterCondition || 'all');
   const [filterSchools, setFilterSchools] = useState<string[]>(saved?.filterSchools || []);
   const [filterCommunities, setFilterCommunities] = useState<string[]>(saved?.filterCommunities || []);
-  const [profileInitialized, setProfileInitialized] = useState(!!saved);
+  const [profileInitialized, setProfileInitialized] = useState(!!saved?.filterProvince);
 
   // Data
   const [products, setProducts] = useState<Product[]>([]);
