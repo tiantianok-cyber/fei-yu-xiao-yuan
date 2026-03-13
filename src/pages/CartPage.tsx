@@ -75,6 +75,9 @@ const CartPage: React.FC = () => {
 
     if (products) {
       const cartMap = new Map(cartData.map(c => [c.product_id, c.id]));
+      const returnedProductIds = new Set(products.map(p => p.id));
+      
+      // Products returned by query (visible via RLS)
       const cartProducts: CartProduct[] = products.map(p => ({
         cart_id: cartMap.get(p.id)!,
         product_id: p.id,
@@ -89,7 +92,26 @@ const CartPage: React.FC = () => {
         semester: p.semester,
         description: p.description,
       }));
-      setItems(cartProducts);
+      
+      // Cart items whose products are not visible (sold/deleted) — mark as sold
+      const unavailableItems: CartProduct[] = cartData
+        .filter(c => !returnedProductIds.has(c.product_id))
+        .map(c => ({
+          cart_id: c.id,
+          product_id: c.product_id,
+          name: '该物品已售出',
+          price: 0,
+          cover_image_url: null,
+          status: 'sold' as string,
+          seller_id: 'unknown',
+          type: 'other' as string,
+          school: null,
+          grade: null,
+          semester: null,
+          description: null,
+        }));
+      
+      setItems([...cartProducts, ...unavailableItems]);
 
       const sellerIds = [...new Set(cartProducts.map(p => p.seller_id))];
       const { data: sellerData } = await supabase
