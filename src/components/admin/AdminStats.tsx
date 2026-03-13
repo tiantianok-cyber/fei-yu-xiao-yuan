@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line,
+  PieChart, Pie, Cell, LineChart, Line, Legend,
 } from 'recharts';
 import { Users, BookOpen, Package, ShoppingCart, EyeOff, Eye } from 'lucide-react';
 
@@ -18,6 +19,8 @@ const PRICE_RANGES = [
   { label: '100元以上', min: 100, max: Infinity },
 ];
 
+type TimeGranularity = 'day' | 'week' | 'month';
+
 interface Stats {
   userCount: number;
   bookCount: number;
@@ -27,13 +30,71 @@ interface Stats {
   totalViews: number;
 }
 
+// Helper: get date string for grouping
+function getDateKey(dateStr: string, granularity: TimeGranularity): string {
+  const d = new Date(dateStr);
+  if (granularity === 'day') return d.toISOString().slice(0, 10);
+  if (granularity === 'month') return d.toISOString().slice(0, 7);
+  // week: use Monday as start
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d);
+  monday.setDate(diff);
+  return monday.toISOString().slice(0, 10);
+}
+
+// Generate time buckets
+function generateBuckets(granularity: TimeGranularity): { key: string; label: string }[] {
+  const buckets: { key: string; label: string }[] = [];
+  const now = new Date();
+
+  if (granularity === 'day') {
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      buckets.push({ key, label: key.slice(5) });
+    }
+  } else if (granularity === 'week') {
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i * 7);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(d);
+      monday.setDate(diff);
+      const key = monday.toISOString().slice(0, 10);
+      if (!buckets.find(b => b.key === key)) {
+        buckets.push({ key, label: key.slice(5) });
+      }
+    }
+  } else {
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.toISOString().slice(0, 7);
+      buckets.push({ key, label: key.slice(2) }); // e.g. 24-01
+    }
+  }
+  return buckets;
+}
+
+const GRANULARITY_LABELS: Record<TimeGranularity, string> = { day: '按日', week: '按周', month: '按月' };
+
 const AdminStats: React.FC = () => {
   const [stats, setStats] = useState<Stats>({ userCount: 0, bookCount: 0, otherCount: 0, soldCount: 0, offShelfCount: 0, totalViews: 0 });
   const [bookTags, setBookTags] = useState<{ name: string; value: number }[]>([]);
   const [priceData, setPriceData] = useState<{ name: string; count: number }[]>([]);
   const [reviewStats, setReviewStats] = useState<{ name: string; count: number }[]>([]);
-  const [trendData, setTrendData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Raw data for trend computation
+  const [userDates, setUserDates] = useState<string[]>([]);
+  const [productDates, setProductDates] = useState<string[]>([]);
+  const [soldDates, setSoldDates] = useState<string[]>([]);
+  const [offShelfDates, setOffShelfDates] = useState<string[]>([]);
+  const [viewDates, setViewDates] = useState<string[]>([]);
+
+  const [granularity, setGranularity] = useState<TimeGranularity>('day');
 
   useEffect(() => {
     loadData();
@@ -42,12 +103,14 @@ const AdminStats: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Basic counts
-      const [profilesRes, productsRes, viewsRes, reviewsRes] = await Promise.all([
+      const [profilesRes, productsRes, viewsCountRes, reviewsRes, profileDatesRes, viewDatesRes, ordersRes] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
-        supabase.from('products').select('id, type, status, price, book_tag, created_at, view_count'),
+        supabase.from('products').select('id, type, status, price, book_tag, created_at, view_count, updated_at'),
         supabase.from('product_views').select('id', { count: 'exact', head: true }),
         supabase.from('reviews').select('id, is_default'),
+        supabase.from('profiles').select('created_at'),
+        supabase.from('product_views').select('viewed_at'),
+        supabase.from('orders').select('id, status, completed_at, cancelled_at'),
       ]);
 
       const products = productsRes.data || [];
@@ -59,14 +122,15 @@ const AdminStats: React.FC = () => {
       const offShelfCount = products.filter(p => p.status === 'off_shelf').length;
       const totalViews = products.reduce((sum, p) => sum + (p.view_count || 0), 0);
 
-      setStats({
-        userCount: profilesRes.count || 0,
-        bookCount,
-        otherCount,
-        soldCount,
-        offShelfCount,
-        totalViews,
-      });
+      setStats({ userCount: profilesRes.count || 0, bookCount, otherCount, soldCount, offShelfCount, totalViews });
+
+      // Raw dates for trends
+      setUserDates((profileDatesRes.data || []).map(p => p.created_at));
+      setProductDates(products.map(p => p.created_at));
+      // For sold: use updated_at of sold products as approximate sold date
+      setSoldDates(products.filter(p => p.status === 'sold').map(p => p.updated_at));
+      setOffShelfDates(products.filter(p => p.status === 'off_shelf').map(p => p.updated_at));
+      setViewDates((viewDatesRes.data || []).map(v => v.viewed_at));
 
       // Book tag distribution
       const tagMap: Record<string, number> = {};
@@ -88,33 +152,53 @@ const AdminStats: React.FC = () => {
         { name: '主动评价', count: activeReviews },
         { name: '默认好评', count: defaultReviews },
       ]);
-
-      // Trend data (last 30 days)
-      const now = new Date();
-      const days: any[] = [];
-      for (let i = 29; i >= 0; i--) {
-        const d = new Date(now);
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().slice(0, 10);
-        days.push({
-          date: dateStr.slice(5), // MM-DD
-          fullDate: dateStr,
-          上架: 0,
-        });
-      }
-
-      products.forEach(p => {
-        const pDate = p.created_at?.slice(0, 10);
-        const day = days.find(d => d.fullDate === pDate);
-        if (day) day['上架']++;
-      });
-
-      setTrendData(days);
     } catch (err) {
       console.error('Failed to load stats', err);
     }
     setLoading(false);
   };
+
+  // Compute trend data based on granularity
+  const trendData = useMemo(() => {
+    const buckets = generateBuckets(granularity);
+    return buckets.map(b => {
+      const row: any = { date: b.label, fullKey: b.key };
+      row['上架'] = productDates.filter(d => getDateKey(d, granularity) === b.key).length;
+      return row;
+    });
+  }, [productDates, granularity]);
+
+  const userTrend = useMemo(() => {
+    const buckets = generateBuckets(granularity);
+    return buckets.map(b => ({
+      date: b.label,
+      新增用户: userDates.filter(d => getDateKey(d, granularity) === b.key).length,
+    }));
+  }, [userDates, granularity]);
+
+  const soldTrend = useMemo(() => {
+    const buckets = generateBuckets(granularity);
+    return buckets.map(b => ({
+      date: b.label,
+      售出: soldDates.filter(d => getDateKey(d, granularity) === b.key).length,
+    }));
+  }, [soldDates, granularity]);
+
+  const offShelfTrend = useMemo(() => {
+    const buckets = generateBuckets(granularity);
+    return buckets.map(b => ({
+      date: b.label,
+      下架: offShelfDates.filter(d => getDateKey(d, granularity) === b.key).length,
+    }));
+  }, [offShelfDates, granularity]);
+
+  const viewTrend = useMemo(() => {
+    const buckets = generateBuckets(granularity);
+    return buckets.map(b => ({
+      date: b.label,
+      浏览量: viewDates.filter(d => getDateKey(d, granularity) === b.key).length,
+    }));
+  }, [viewDates, granularity]);
 
   if (loading) {
     return <div className="text-center py-12 text-muted-foreground">加载统计数据...</div>;
@@ -127,6 +211,14 @@ const AdminStats: React.FC = () => {
     { label: '已售出', value: stats.soldCount, icon: ShoppingCart },
     { label: '已下架', value: stats.offShelfCount, icon: EyeOff },
     { label: '总浏览量', value: stats.totalViews, icon: Eye },
+  ];
+
+  const trendCharts = [
+    { title: '用户增长趋势', data: userTrend, dataKey: '新增用户', color: 'hsl(var(--primary))' },
+    { title: '上架趋势', data: trendData, dataKey: '上架', color: 'hsl(var(--chart-2))' },
+    { title: '售出趋势', data: soldTrend, dataKey: '售出', color: 'hsl(var(--chart-3))' },
+    { title: '下架趋势', data: offShelfTrend, dataKey: '下架', color: 'hsl(var(--chart-4))' },
+    { title: '浏览趋势', data: viewTrend, dataKey: '浏览量', color: 'hsl(var(--chart-5))' },
   ];
 
   return (
@@ -144,21 +236,37 @@ const AdminStats: React.FC = () => {
         ))}
       </div>
 
-      {/* Trend chart */}
-      <Card>
-        <CardHeader><CardTitle className="text-sm">上架趋势（近30天）</CardTitle></CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Line type="monotone" dataKey="上架" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {/* Time granularity toggle */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">时间维度：</span>
+        <Tabs value={granularity} onValueChange={(v) => setGranularity(v as TimeGranularity)}>
+          <TabsList>
+            {(['day', 'week', 'month'] as TimeGranularity[]).map(g => (
+              <TabsTrigger key={g} value={g} className="text-xs px-3">{GRANULARITY_LABELS[g]}</TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {/* Trend charts */}
+      <div className="grid grid-cols-1 gap-4">
+        {trendCharts.map(chart => (
+          <Card key={chart.title}>
+            <CardHeader><CardTitle className="text-sm">{chart.title}</CardTitle></CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={chart.data}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey={chart.dataKey} stroke={chart.color} strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Book tag pie chart */}
