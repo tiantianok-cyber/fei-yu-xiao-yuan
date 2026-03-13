@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Camera, X, Loader2, AlertTriangle, Lightbulb } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +23,8 @@ const CONDITIONS = [
 const BOOK_TAGS = ['学校推荐', '课外书', '教材教辅', '兴趣书', '工具书', '绘本', '课外读物', '其他'];
 
 const PublishPage: React.FC = () => {
+  const { productId } = useParams<{ productId?: string }>();
+  const isEdit = !!productId;
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { toast } = useToast();
@@ -44,9 +46,52 @@ const PublishPage: React.FC = () => {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingProduct, setLoadingProduct] = useState(false);
+  const [profileDefaultsApplied, setProfileDefaultsApplied] = useState(false);
 
-  // Pre-fill from sessionStorage (copy from product detail)
+  // Load existing product for edit mode
   useEffect(() => {
+    if (!isEdit || !productId) return;
+    const loadProduct = async () => {
+      setLoadingProduct(true);
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', productId)
+        .single();
+      if (error || !data) {
+        toast({ title: '物品不存在', variant: 'destructive' });
+        navigate('/my-products', { replace: true });
+        return;
+      }
+      if (user && data.seller_id !== user.id) {
+        toast({ title: '无权编辑此物品', variant: 'destructive' });
+        navigate('/my-products', { replace: true });
+        return;
+      }
+      setType(data.type);
+      setName(data.name);
+      setAuthor(data.author || '');
+      setTranslator(data.translator || '');
+      setPublisher(data.publisher || '');
+      setPublishDate(data.publish_date || '');
+      setGrades(data.grade || []);
+      setSemester(data.semester || '');
+      setBookTag(data.book_tag || '');
+      setCondition(data.condition || '');
+      setDescription(data.description || '');
+      setPrice(String(data.price));
+      setSchool(data.school || '');
+      if (data.cover_image_url) setCoverPreview(data.cover_image_url);
+      setProfileDefaultsApplied(true); // skip profile defaults for edit
+      setLoadingProduct(false);
+    };
+    loadProduct();
+  }, [productId, user]);
+
+  // Pre-fill from sessionStorage (copy from product detail) - only for new
+  useEffect(() => {
+    if (isEdit) return;
     const prefill = sessionStorage.getItem('prefill_product');
     if (prefill) {
       try {
@@ -66,7 +111,6 @@ const PublishPage: React.FC = () => {
     }
   }, []);
 
-  // Map old grade names to new ones
   const normalizeGrade = (g: string): string => {
     const map: Record<string, string> = {
       '小学一年级': '一年级', '小学二年级': '二年级', '小学三年级': '三年级',
@@ -76,12 +120,14 @@ const PublishPage: React.FC = () => {
     return map[g] || g;
   };
 
-  // Default school/grade/semester from profile
+  // Default school/grade/semester from profile - only for new
   useEffect(() => {
+    if (isEdit || profileDefaultsApplied) return;
     if (profile?.school && !school) setSchool(profile.school);
     if (profile?.child_grade && grades.length === 0) setGrades([normalizeGrade(profile.child_grade)]);
     if (profile?.child_semester && !semester) setSemester(profile.child_semester);
-  }, [profile]);
+    if (profile) setProfileDefaultsApplied(true);
+  }, [profile, isEdit, profileDefaultsApplied]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -120,7 +166,6 @@ const PublishPage: React.FC = () => {
       const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path);
       coverUrl = urlData.publicUrl;
     } else if (coverPreview && coverPreview.startsWith('http')) {
-      // Use pre-filled cover image URL from copied product
       coverUrl = coverPreview;
     }
 
@@ -144,15 +189,26 @@ const PublishPage: React.FC = () => {
       cover_image_url: coverUrl,
     };
 
-    const { error } = await supabase.from('products').insert(productData);
-    if (error) {
-      toast({ title: '发布失败', description: error.message, variant: 'destructive' });
-      setSubmitting(false);
-      return;
+    if (isEdit && productId) {
+      const { seller_id, ...updateData } = productData;
+      const { error } = await supabase.from('products').update(updateData).eq('id', productId);
+      if (error) {
+        toast({ title: '保存失败', description: error.message, variant: 'destructive' });
+        setSubmitting(false);
+        return;
+      }
+      toast({ title: '修改已保存 ✅' });
+      navigate('/my-products');
+    } else {
+      const { error } = await supabase.from('products').insert(productData);
+      if (error) {
+        toast({ title: '发布失败', description: error.message, variant: 'destructive' });
+        setSubmitting(false);
+        return;
+      }
+      toast({ title: '发布成功 🎉' });
+      navigate('/my-products');
     }
-
-    toast({ title: '发布成功 🎉' });
-    navigate('/my-products');
   };
 
   const handleGradeChange = (newGrades: string[], newSemester: string) => {
@@ -160,28 +216,43 @@ const PublishPage: React.FC = () => {
     setSemester(newSemester);
   };
 
+  if (loadingProduct) {
+    return (
+      <div className="container mx-auto max-w-2xl px-4 py-6">
+        <h1 className="text-lg font-semibold text-foreground mb-4">加载中...</h1>
+        <div className="animate-pulse space-y-4">
+          <div className="h-10 bg-muted rounded" />
+          <div className="h-32 bg-muted rounded" />
+          <div className="h-10 bg-muted rounded" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto max-w-2xl px-4 py-6">
-      <h1 className="text-lg font-semibold text-foreground mb-4">发布物品</h1>
+      <h1 className="text-lg font-semibold text-foreground mb-4">{isEdit ? '修改物品' : '发布物品'}</h1>
 
-      <Tabs value={type} onValueChange={(v) => setType(v as 'book' | 'other')}>
-        <TabsList className="w-full grid grid-cols-2 mb-4">
+      <Tabs value={type} onValueChange={(v) => { if (!isEdit) setType(v as 'book' | 'other'); }}>
+        <TabsList className={`w-full grid grid-cols-2 mb-4 ${isEdit ? 'pointer-events-none opacity-60' : ''}`}>
           <TabsTrigger value="book" className="text-base">📚 书籍</TabsTrigger>
           <TabsTrigger value="other" className="text-base">📦 其他</TabsTrigger>
         </TabsList>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <TabsContent value="book" className="mt-0 space-y-5">
-            <div className="space-y-2 mb-4">
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>请确保上架书籍为正版，盗版/影印版书籍严禁上架。经发现将被下架处理；多次违规或情节严重者，将予以封号。</span>
+            {!isEdit && (
+              <div className="space-y-2 mb-4">
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>请确保上架书籍为正版，盗版/影印版书籍严禁上架。经发现将被下架处理；多次违规或情节严重者，将予以封号。</span>
+                </div>
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
+                  <Lightbulb className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>信息越丰富，越容易被他人查找到</span>
+                </div>
               </div>
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
-                <Lightbulb className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>信息越丰富，越容易被他人查找到</span>
-              </div>
-            </div>
+            )}
 
             {/* Cover image */}
             <div className="space-y-2">
@@ -299,18 +370,20 @@ const PublishPage: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="other" className="mt-0 space-y-5">
-            <div className="space-y-2 mb-4">
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>请确保物品为正品，并如实描述详细情况。</span>
+            {!isEdit && (
+              <div className="space-y-2 mb-4">
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>请确保物品为正品，并如实描述详细情况。</span>
+                </div>
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
+                  <Lightbulb className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>信息越丰富，越容易被他人查找到</span>
+                </div>
               </div>
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
-                <Lightbulb className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>信息越丰富，越容易被他人查找到</span>
-              </div>
-            </div>
+            )}
 
-            {/* Cover image - inline instead of inner component */}
+            {/* Cover image */}
             <div className="space-y-2">
               <Label>封面图片</Label>
               <div className="flex items-start gap-3">
@@ -399,7 +472,7 @@ const PublishPage: React.FC = () => {
 
           <Button type="submit" className="w-full" disabled={submitting}>
             {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            发布
+            {isEdit ? '保存修改' : '发布'}
           </Button>
         </form>
       </Tabs>
