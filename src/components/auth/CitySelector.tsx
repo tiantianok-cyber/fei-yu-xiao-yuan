@@ -69,7 +69,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ province, city, dist
   return (
     <div className="grid grid-cols-3 gap-2">
       <Select
-        value={province}
+        value={province || undefined}
         onValueChange={(v) => onChange(v, '', '')}
       >
         <SelectTrigger>
@@ -83,7 +83,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ province, city, dist
       </Select>
 
       <Select
-        value={city}
+        value={city || undefined}
         onValueChange={(v) => onChange(province, v, '')}
         disabled={!province}
       >
@@ -98,7 +98,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ province, city, dist
       </Select>
 
       <Select
-        value={district}
+        value={district || undefined}
         onValueChange={(v) => onChange(province, city, v)}
         disabled={!city}
       >
