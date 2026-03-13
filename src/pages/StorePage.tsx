@@ -129,9 +129,26 @@ const StorePage: React.FC = () => {
                 {seller.community && <span>🏠 {seller.community}</span>}
               </div>
             </div>
-            <div className="text-right shrink-0">
-              <p className="text-lg font-bold text-primary">{products.length}</p>
-              <p className="text-xs text-muted-foreground">在售</p>
+            <div className="flex flex-col items-center gap-2 shrink-0">
+              <div className="text-right">
+                <p className="text-lg font-bold text-primary">{products.length}</p>
+                <p className="text-xs text-muted-foreground">在售</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const url = `${window.location.origin}/store/${userId}`;
+                  const text = `自家孩子用过的正版好书、干净物品，便宜出，点链接挑选：${url}`;
+                  navigator.clipboard.writeText(text).then(() => {
+                    toast({ title: '分享内容已复制到剪贴板 📋' });
+                  }).catch(() => {
+                    toast({ title: '复制失败，请手动复制', variant: 'destructive' });
+                  });
+                }}
+              >
+                <Share2 className="h-3.5 w-3.5 mr-1" />分享
+              </Button>
             </div>
           </div>
         )}
