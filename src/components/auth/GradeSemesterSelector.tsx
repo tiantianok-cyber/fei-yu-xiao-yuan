@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Check } from 'lucide-react';
 
 const GRADES = [
   '幼儿园',
@@ -39,7 +39,6 @@ export const GradeSemesterSelector: React.FC<GradeSemesterSelectorProps> = ({
     } else {
       newGrades = [...grades, g];
     }
-    // If multiple or kindergarten, clear semester
     const newSemester = (newGrades.length > 1 || newGrades.includes('幼儿园')) ? '' : semester;
     onChange(newGrades, newSemester);
   };
@@ -48,24 +47,27 @@ export const GradeSemesterSelector: React.FC<GradeSemesterSelectorProps> = ({
     <div className="space-y-3">
       {/* Grade multi-select */}
       <div className="flex flex-wrap gap-2">
-        {GRADES.map((g) => (
-          <div
-            key={g}
-            onClick={() => toggleGrade(g)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-sm cursor-pointer transition-colors select-none ${
-              grades.includes(g)
-                ? 'border-primary bg-primary/10 text-foreground'
-                : 'border-border text-muted-foreground hover:border-primary/50'
-            }`}
-          >
-            <Checkbox
-              checked={grades.includes(g)}
-              tabIndex={-1}
-              className="h-4 w-4 pointer-events-none"
-            />
-            {g}
-          </div>
-        ))}
+        {GRADES.map((g) => {
+          const selected = grades.includes(g);
+          return (
+            <div
+              key={g}
+              onClick={() => toggleGrade(g)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-sm cursor-pointer transition-colors select-none ${
+                selected
+                  ? 'border-primary bg-primary/10 text-foreground'
+                  : 'border-border text-muted-foreground hover:border-primary/50'
+              }`}
+            >
+              <div className={`h-4 w-4 rounded border flex items-center justify-center shrink-0 ${
+                selected ? 'bg-primary border-primary' : 'border-muted-foreground/40'
+              }`}>
+                {selected && <Check className="h-3 w-3 text-primary-foreground" />}
+              </div>
+              {g}
+            </div>
+          );
+        })}
       </div>
 
       {/* Semester */}
