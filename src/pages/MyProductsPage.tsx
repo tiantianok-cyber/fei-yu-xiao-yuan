@@ -128,13 +128,21 @@ const MyProductsPage: React.FC = () => {
                   </div>
                   <div className="flex gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
                     {(product.status === 'on_sale' || product.status === 'off_shelf') && (
-                      <button
-                        onClick={() => toggleShelf(product)}
-                        className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5"
-                      >
-                        {product.status === 'on_sale' ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                        {product.status === 'on_sale' ? '下架' : '上架'}
-                      </button>
+                      <>
+                        <button
+                          onClick={() => navigate(`/publish/${product.id}`)}
+                          className="text-xs text-primary hover:text-primary/80 flex items-center gap-0.5"
+                        >
+                          <Edit className="h-3 w-3" />修改
+                        </button>
+                        <button
+                          onClick={() => toggleShelf(product)}
+                          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5"
+                        >
+                          {product.status === 'on_sale' ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                          {product.status === 'on_sale' ? '下架' : '上架'}
+                        </button>
+                      </>
                     )}
                     {product.status !== 'in_trade' && product.status !== 'sold' && (
                       <button
