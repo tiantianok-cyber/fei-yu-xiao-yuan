@@ -10,6 +10,25 @@ import { useToast } from '@/hooks/use-toast';
 import { CitySelector } from '@/components/auth/CitySelector';
 import { GradeSemesterSelector } from '@/components/auth/GradeSemesterSelector';
 
+const normalizeGradeLabel = (grade: string) => {
+  const gradeMap: Record<string, string> = {
+    小学一年级: '一年级',
+    小学二年级: '二年级',
+    小学三年级: '三年级',
+    小学四年级: '四年级',
+    小学五年级: '五年级',
+    小学六年级: '六年级',
+    初中一年级: '七年级',
+    初中二年级: '八年级',
+    初中三年级: '九年级',
+    高中一年级: '高一',
+    高中二年级: '高二',
+    高中三年级: '高三',
+  };
+
+  return gradeMap[grade] || grade;
+};
+
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile, refreshProfile } = useAuth();
