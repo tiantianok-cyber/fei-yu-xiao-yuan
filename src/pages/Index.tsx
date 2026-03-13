@@ -50,6 +50,8 @@ interface SellerProfile {
   phone: string;
   community: string | null;
   school: string | null;
+  city: string | null;
+  district: string | null;
 }
 
 const maskPhone = (phone: string) => {
