@@ -165,9 +165,7 @@ const RegisterForm: React.FC<{ onSwitchToLogin: () => void }> = ({ onSwitchToLog
             city={form.city}
             district={form.district}
             onChange={(p, c, d) => {
-              updateForm('province', p);
-              updateForm('city', c);
-              updateForm('district', d);
+              setForm(prev => ({ ...prev, province: p, city: c, district: d }));
             }}
           />
           <p className="text-xs text-muted-foreground">选择正确区域有助于附近的家长精确查找到您发布的闲置物品</p>
