@@ -195,9 +195,9 @@ const ProductDetail: React.FC = () => {
           {/* Left: Cover + Actions */}
           <div className="md:w-64 shrink-0 space-y-4">
             {/* Cover */}
-            <div className="bg-muted rounded-xl overflow-hidden aspect-[1/1.42] relative">
+            <div className="bg-muted rounded-xl overflow-hidden aspect-[1/1.42] relative cursor-pointer" onClick={() => product.cover_image_url && setShowImage(true)}>
               {product.cover_image_url ? (
-                <img src={product.cover_image_url} alt={product.name} className="w-full h-full object-cover" />
+                <img src={product.cover_image_url} alt={product.name} className="w-full h-full object-cover hover:opacity-90 transition-opacity" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center text-muted-foreground">
