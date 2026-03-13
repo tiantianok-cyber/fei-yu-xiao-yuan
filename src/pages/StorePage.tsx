@@ -139,7 +139,7 @@ const StorePage: React.FC = () => {
                 size="sm"
                 onClick={() => {
                   const url = `${window.location.origin}/store/${userId}`;
-                  const text = `自家孩子用过的正版好书、干净物品，便宜出，点链接挑选：${url}`;
+                  const text = `整理了一些孩子不用的书和用品，价格实惠，点进来挑一挑吧：${url}`;
                   navigator.clipboard.writeText(text).then(() => {
                     toast({ title: '分享内容已复制到剪贴板 📋' });
                   }).catch(() => {
