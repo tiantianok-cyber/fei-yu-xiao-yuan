@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Plus, ShoppingCart, ClipboardList, User, ChevronDown, LogOut } from 'lucide-react';
+import { Home, Plus, ShoppingCart, ClipboardList, User, ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import logo from '@/assets/logo.png';
 
 const navItems = [
+  { path: '/', label: '首页', icon: Home },
   { path: '/publish', label: '发布', icon: Plus },
   { path: '/cart', label: '购物车', icon: ShoppingCart },
   { path: '/orders', label: '订单', icon: ClipboardList },
