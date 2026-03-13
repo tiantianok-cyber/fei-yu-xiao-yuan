@@ -7,11 +7,24 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-interface CityData {
-  [province: string]: {
-    [city: string]: string[];
-  };
+interface AreaItem {
+  area: string;
+  code: string;
 }
+
+interface CityItem {
+  city: string;
+  code: string;
+  areas: AreaItem[];
+}
+
+interface ProvinceItem {
+  province: string;
+  code: string;
+  citys: CityItem[];
+}
+
+type CityData = ProvinceItem[];
 
 interface CitySelectorProps {
   province: string;
@@ -38,9 +51,18 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ province, city, dist
       .catch(() => setLoading(false));
   }, []);
 
-  const provinces = useMemo(() => (data ? Object.keys(data) : []), [data]);
-  const cities = useMemo(() => (data && province ? Object.keys(data[province] || {}) : []), [data, province]);
-  const districts = useMemo(() => (data && province && city ? (data[province]?.[city] || []) : []), [data, province, city]);
+  const provinces = useMemo(() => (data ? data.map(p => p.province) : []), [data]);
+  const cities = useMemo(() => {
+    if (!data || !province) return [];
+    const prov = data.find(p => p.province === province);
+    return prov ? prov.citys.map(c => c.city) : [];
+  }, [data, province]);
+  const districts = useMemo(() => {
+    if (!data || !province || !city) return [];
+    const prov = data.find(p => p.province === province);
+    const cit = prov?.citys.find(c => c.city === city);
+    return cit ? cit.areas.map(a => a.area) : [];
+  }, [data, province, city]);
 
   if (loading) return <div className="text-sm text-muted-foreground py-2">加载行政区划数据...</div>;
 
