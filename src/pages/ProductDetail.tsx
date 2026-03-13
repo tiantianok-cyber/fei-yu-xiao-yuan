@@ -239,7 +239,7 @@ const ProductDetail: React.FC = () => {
               )}
               <Button variant="outline" className="w-full" onClick={() => {
                 const url = `${window.location.origin}/product/${product.id}`;
-                const text = `${product.name} 孩子的闲置好物，价格实惠，有需要的邻居戳链接挑选 ${url}`;
+                const text = `【${product.name}】孩子的闲置好物，价格实惠，有需要的邻居戳链接挑选 ${url}`;
                 navigator.clipboard.writeText(text).then(() => {
                   toast({ title: '分享内容已复制到剪贴板 📋' });
                 }).catch(() => {
