@@ -14,7 +14,7 @@ import OrdersPage from "./pages/OrdersPage";
 import MyProductsPage from "./pages/MyProductsPage";
 import ProfilePage from "./pages/ProfilePage";
 import StorePage from "./pages/StorePage";
-import NotFound from "./pages/NotFound";
+import AdminPage from "./pages/AdminPage";
 
 // Placeholder pages - will be built in later batches
 const PlaceholderPage = ({ title }: { title: string }) => (
