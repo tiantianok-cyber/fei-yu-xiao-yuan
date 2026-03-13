@@ -34,11 +34,12 @@ interface CitySelectorProps {
   city: string;
   district: string;
   onChange: (province: string, city: string, district: string) => void;
+  showLocatePrompt?: boolean;
 }
 
 let cachedData: CityData | null = null;
 
-export const CitySelector: React.FC<CitySelectorProps> = ({ province, city, district, onChange }) => {
+export const CitySelector: React.FC<CitySelectorProps> = ({ province, city, district, onChange, showLocatePrompt }) => {
   const [data, setData] = useState<CityData | null>(cachedData);
   const [loading, setLoading] = useState(!cachedData);
   const [locating, setLocating] = useState(false);
@@ -135,6 +136,22 @@ export const CitySelector: React.FC<CitySelectorProps> = ({ province, city, dist
 
   return (
     <div className="space-y-2">
+      {showLocatePrompt && !province && (
+        <div className="flex flex-col items-center gap-2 py-3 border border-dashed border-border rounded-lg mb-2">
+          <p className="text-sm text-muted-foreground">未设置城市，点击下方按钮自动定位</p>
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            className="gap-1.5"
+            onClick={handleLocate}
+            disabled={locating}
+          >
+            {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+            自动定位当前城市
+          </Button>
+        </div>
+      )}
       <div className="flex items-center gap-2">
         <div className="grid grid-cols-3 gap-2 flex-1">
           <Select

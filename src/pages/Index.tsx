@@ -400,6 +400,7 @@ const Index: React.FC = () => {
                   setFilterCity(c);
                   setFilterDistrict(d);
                 }}
+                showLocatePrompt={!filterProvince}
               />
             </PopoverContent>
           </Popover>
