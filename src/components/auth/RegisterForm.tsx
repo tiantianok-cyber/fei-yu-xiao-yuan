@@ -193,13 +193,17 @@ const RegisterForm: React.FC<{ onSwitchToLogin: () => void }> = ({ onSwitchToLog
         {/* 6. School */}
         <div className="space-y-1.5">
           <Label htmlFor="reg-school">孩子就读学校</Label>
-          <Input
-            id="reg-school"
-            placeholder="请输入学校名称"
-            value={form.school}
-            onChange={(e) => updateForm('school', e.target.value)}
-            maxLength={50}
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="reg-school"
+              placeholder="请输入学校名称"
+              value={form.school}
+              onChange={(e) => updateForm('school', e.target.value)}
+              maxLength={50}
+              className="flex-1"
+            />
+            <AMapLocationPicker type="school" onConfirm={(name) => updateForm('school', name)} />
+          </div>
           <p className="text-xs text-muted-foreground">请填写完整的学校名称，建议以地图App上的名称为准，方便附近家长精准查找到您发布的闲置物品</p>
         </div>
 

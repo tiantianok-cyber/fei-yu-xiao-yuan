@@ -224,7 +224,10 @@ const ProfilePage: React.FC = () => {
 
           <div className="space-y-1.5">
             <Label className="text-xs">学校</Label>
-            <Input value={school} onChange={e => setSchool(e.target.value)} placeholder="输入学校名称" />
+            <div className="flex items-center gap-2">
+              <Input value={school} onChange={e => setSchool(e.target.value)} placeholder="输入学校名称" className="flex-1" />
+              <AMapLocationPicker type="school" onConfirm={(name) => setSchool(name)} />
+            </div>
           </div>
 
           <div className="space-y-1.5">
