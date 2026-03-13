@@ -178,6 +178,7 @@ const ProfilePage: React.FC = () => {
           <div className="space-y-1.5">
             <Label className="text-xs">手机号</Label>
             <Input value={phone} disabled className="bg-muted" />
+            <p className="text-xs text-muted-foreground">手机号不可自行修改，如需修改请添加微信号 <span className="font-medium text-foreground">tgtiantianok</span> 联系客服</p>
           </div>
 
           <div className="space-y-1.5">
