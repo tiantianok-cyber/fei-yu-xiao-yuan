@@ -88,7 +88,7 @@ const ProfilePage: React.FC = () => {
       return;
     }
     setSaving(true);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .update({
         nickname: nickname.trim(),
@@ -101,10 +101,13 @@ const ProfilePage: React.FC = () => {
         child_semester: childSemester,
         avatar_url: avatarUrl,
       })
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .select();
 
     if (error) {
-      toast({ title: '保存失败', variant: 'destructive' });
+      toast({ title: '保存失败', description: error.message, variant: 'destructive' });
+    } else if (!data || data.length === 0) {
+      toast({ title: '保存失败', description: '请重新登录后再试', variant: 'destructive' });
     } else {
       toast({ title: '保存成功 ✓' });
       await refreshProfile();
@@ -178,6 +181,7 @@ const ProfilePage: React.FC = () => {
           <div className="space-y-1.5">
             <Label className="text-xs">手机号</Label>
             <Input value={phone} disabled className="bg-muted" />
+            <p className="text-xs text-muted-foreground">手机号不可自行修改，如需修改请添加微信号 <span className="font-medium text-foreground">tgtiantianok</span> 联系客服</p>
           </div>
 
           <div className="space-y-1.5">

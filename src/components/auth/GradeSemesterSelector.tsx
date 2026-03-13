@@ -10,9 +10,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 const GRADES = [
   '幼儿园',
-  '一年级', '二年级', '三年级', '四年级', '五年级', '六年级',
-  '七年级', '八年级', '九年级',
-  '高一', '高二', '高三',
+  '小学一年级', '小学二年级', '小学三年级', '小学四年级', '小学五年级', '小学六年级',
+  '初中一年级', '初中二年级', '初中三年级',
+  '高中一年级', '高中二年级', '高中三年级',
 ];
 
 const SEMESTERS = ['上学期', '下学期'];
@@ -60,7 +60,7 @@ export const GradeSemesterSelector: React.FC<GradeSemesterSelectorProps> = ({
             <Checkbox
               checked={grades.includes(g)}
               onCheckedChange={() => toggleGrade(g)}
-              className="h-3.5 w-3.5"
+              className="h-4 w-4"
             />
             {g}
           </label>
