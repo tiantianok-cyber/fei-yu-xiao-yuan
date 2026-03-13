@@ -12,6 +12,8 @@ import PublishPage from "./pages/PublishPage";
 import CartPage from "./pages/CartPage";
 import OrdersPage from "./pages/OrdersPage";
 import MyProductsPage from "./pages/MyProductsPage";
+import ProfilePage from "./pages/ProfilePage";
+import StorePage from "./pages/StorePage";
 import NotFound from "./pages/NotFound";
 
 // Placeholder pages - will be built in later batches
