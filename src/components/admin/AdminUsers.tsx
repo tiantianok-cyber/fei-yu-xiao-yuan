@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -15,7 +18,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { KeyRound, FileText, Ban, CheckCircle } from 'lucide-react';
+import { KeyRound, FileText, Ban, CheckCircle, Search } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -61,15 +64,22 @@ const AdminUsers: React.FC = () => {
   const [disableConfirm, setDisableConfirm] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
   const [actionLoading, setActionLoading] = useState(false);
   const [scores, setScores] = useState<Record<string, { avg: number; count: number }>>({});
+  const [bookCounts, setBookCounts] = useState<Record<string, { onSale: number; sold: number }>>({});
+
+  // Search & filter state
+  const [searchText, setSearchText] = useState('');
+  const [filterCity, setFilterCity] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
 
   useEffect(() => { loadUsers(); }, []);
 
   const loadUsers = async () => {
     setLoading(true);
-    const [{ data: profilesData }, { data: rolesData }, { data: reviewsData }] = await Promise.all([
+    const [{ data: profilesData }, { data: rolesData }, { data: reviewsData }, { data: productsData }] = await Promise.all([
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
       supabase.from('user_roles').select('user_id, role'),
       supabase.from('reviews').select('reviewee_id, cooperation_score'),
+      supabase.from('products').select('seller_id, status'),
     ]);
 
     const roleRows = (rolesData as UserRole[]) || [];
@@ -86,24 +96,49 @@ const AdminUsers: React.FC = () => {
       setCurrentRole(role);
     }
 
+    // Calculate scores
     const scoreMap: Record<string, { total: number; count: number }> = {};
     (reviewsData || []).forEach((r: any) => {
       if (!scoreMap[r.reviewee_id]) scoreMap[r.reviewee_id] = { total: 0, count: 0 };
       scoreMap[r.reviewee_id].total += Number(r.cooperation_score || 0);
       scoreMap[r.reviewee_id].count += 1;
     });
-
     const calculated: Record<string, { avg: number; count: number }> = {};
     Object.entries(scoreMap).forEach(([uid, v]) => {
-      calculated[uid] = {
-        avg: Number((v.total / v.count).toFixed(1)),
-        count: v.count,
-      };
+      calculated[uid] = { avg: Number((v.total / v.count).toFixed(1)), count: v.count };
     });
     setScores(calculated);
 
+    // Calculate book counts (on_sale + sold)
+    const countMap: Record<string, { onSale: number; sold: number }> = {};
+    (productsData || []).forEach((p: any) => {
+      if (!countMap[p.seller_id]) countMap[p.seller_id] = { onSale: 0, sold: 0 };
+      if (p.status === 'on_sale' || p.status === 'in_trade') countMap[p.seller_id].onSale += 1;
+      if (p.status === 'sold') countMap[p.seller_id].sold += 1;
+    });
+    setBookCounts(countMap);
+
     setLoading(false);
   };
+
+  // Derive unique cities for filter
+  const cityOptions = useMemo(() => {
+    const cities = new Set<string>();
+    users.forEach((u) => { if (u.city) cities.add(u.city); });
+    return Array.from(cities).sort();
+  }, [users]);
+
+  // Filtered users
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      const matchesSearch = !searchText ||
+        u.nickname.toLowerCase().includes(searchText.toLowerCase()) ||
+        u.phone.includes(searchText);
+      const matchesCity = filterCity === 'all' || u.city === filterCity;
+      const matchesStatus = filterStatus === 'all' || u.status === filterStatus;
+      return matchesSearch && matchesCity && matchesStatus;
+    });
+  }, [users, searchText, filterCity, filterStatus]);
 
   const getRoleOfUser = (u: UserProfile): AdminRole => {
     if (u.phone === SUPER_ADMIN_PHONE) return 'admin';
@@ -146,7 +181,7 @@ const AdminUsers: React.FC = () => {
       .select('*')
       .eq('user_id', targetUser.user_id)
       .order('login_time', { ascending: false })
-      .limit(50);
+      .limit(30);
     setLogsDialog({ open: true, user: targetUser, logs: (data as LoginLog[]) || [] });
   };
 
@@ -171,12 +206,10 @@ const AdminUsers: React.FC = () => {
       toast.error('当前账号无权限操作该用户');
       return;
     }
-
     if (targetUser.status === 'enabled') {
       setDisableConfirm({ open: true, user: targetUser });
       return;
     }
-
     await executeToggleStatus(targetUser);
   };
 
@@ -184,6 +217,41 @@ const AdminUsers: React.FC = () => {
 
   return (
     <div className="space-y-4">
+      {/* Search & Filter Bar */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="搜索称呼或手机号..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={filterCity} onValueChange={setFilterCity}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="城市筛选" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部城市</SelectItem>
+            {cityOptions.map((c) => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-[120px]">
+            <SelectValue placeholder="状态筛选" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部状态</SelectItem>
+            <SelectItem value="enabled">正常</SelectItem>
+            <SelectItem value="disabled">禁用</SelectItem>
+          </SelectContent>
+        </Select>
+        <span className="text-xs text-muted-foreground">共 {filteredUsers.length} 人</span>
+      </div>
+
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -193,6 +261,7 @@ const AdminUsers: React.FC = () => {
               <TableHead className="hidden md:table-cell">城市</TableHead>
               <TableHead className="hidden lg:table-cell">学校</TableHead>
               <TableHead className="hidden md:table-cell">年级</TableHead>
+              <TableHead className="hidden md:table-cell">上架/售出</TableHead>
               <TableHead className="hidden md:table-cell">综合得分</TableHead>
               <TableHead>状态</TableHead>
               <TableHead className="hidden sm:table-cell">注册时间</TableHead>
@@ -200,9 +269,10 @@ const AdminUsers: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((u) => {
+            {filteredUsers.map((u) => {
               const role = getRoleOfUser(u);
               const userScore = scores[u.user_id];
+              const counts = bookCounts[u.user_id];
               const canManage = canManageUserStatus(u);
 
               return (
@@ -221,6 +291,9 @@ const AdminUsers: React.FC = () => {
                   <TableCell className="hidden lg:table-cell text-xs">{u.school || '-'}</TableCell>
                   <TableCell className="hidden md:table-cell text-xs">
                     {u.child_grade ? `${u.child_grade}${u.child_semester ? ` ${u.child_semester}` : ''}` : '-'}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell text-xs">
+                    {counts ? `${counts.onSale} / ${counts.sold}` : '0 / 0'}
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-xs">
                     {userScore ? `${userScore.avg}（${userScore.count}条）` : '-'}
@@ -266,10 +339,18 @@ const AdminUsers: React.FC = () => {
                 </TableRow>
               );
             })}
+            {filteredUsers.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                  无匹配用户
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
 
+      {/* Disable Confirm Dialog */}
       <AlertDialog
         open={disableConfirm.open}
         onOpenChange={(open) => setDisableConfirm({ open, user: open ? disableConfirm.user : null })}
@@ -286,9 +367,7 @@ const AdminUsers: React.FC = () => {
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={async () => {
-                if (disableConfirm.user) {
-                  await executeToggleStatus(disableConfirm.user);
-                }
+                if (disableConfirm.user) await executeToggleStatus(disableConfirm.user);
                 setDisableConfirm({ open: false, user: null });
               }}
             >
@@ -298,6 +377,7 @@ const AdminUsers: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Reset Password Dialog */}
       <Dialog open={resetDialog.open} onOpenChange={(v) => setResetDialog({ open: v, user: v ? resetDialog.user : null })}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
@@ -317,13 +397,14 @@ const AdminUsers: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Login Logs Dialog */}
       <Dialog
         open={logsDialog.open}
         onOpenChange={(v) => setLogsDialog({ open: v, user: v ? logsDialog.user : null, logs: v ? logsDialog.logs : [] })}
       >
         <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>登录日志 - {logsDialog.user?.nickname}</DialogTitle>
+            <DialogTitle>登录日志（最近30条） - {logsDialog.user?.nickname}</DialogTitle>
           </DialogHeader>
           {logsDialog.logs.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">暂无登录记录</p>
