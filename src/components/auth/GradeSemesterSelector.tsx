@@ -69,7 +69,7 @@ export const GradeSemesterSelector: React.FC<GradeSemesterSelectorProps> = ({
 
       {/* Semester */}
       <Select
-        value={semester}
+        value={semester || undefined}
         onValueChange={(v) => onChange(grades, v)}
         disabled={semesterDisabled}
       >
