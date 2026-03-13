@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, Share2 } from 'lucide-react';
+import { ArrowLeft, Phone, Share2, Star, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +19,7 @@ interface SellerProfile {
 interface Product {
   id: string;
   name: string;
+  author: string | null;
   price: number;
   cover_image_url: string | null;
   type: string;
@@ -26,7 +27,20 @@ interface Product {
   condition: string;
   grade: string[] | null;
   semester: string | null;
+  school: string | null;
   book_tag: string | null;
+  description: string | null;
+  created_at: string;
+}
+
+interface Review {
+  id: string;
+  reviewer_id: string;
+  reviewer_role: string;
+  cooperation_score: number;
+  description_match_score: number | null;
+  content: string | null;
+  is_default: boolean;
   created_at: string;
 }
 
@@ -38,6 +52,27 @@ const CONDITIONS: Record<string, string> = {
   heavily_used: '九成新以下',
 };
 
+const maskName = (name: string) => {
+  if (!name || name.length <= 1) return name;
+  return name.charAt(0) + '**';
+};
+
+const maskPhone = (phone: string) => {
+  if (!phone || phone.length < 7) return phone;
+  return phone.slice(0, 3) + '****' + phone.slice(-4);
+};
+
+const StarDisplay: React.FC<{ score: number; max?: number }> = ({ score, max = 5 }) => (
+  <div className="flex items-center gap-0.5">
+    {Array.from({ length: max }).map((_, i) => (
+      <Star
+        key={i}
+        className={`h-3.5 w-3.5 ${i < Math.round(score) ? 'text-accent fill-accent' : 'text-muted-foreground/30'}`}
+      />
+    ))}
+  </div>
+);
+
 const StorePage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
@@ -46,30 +81,94 @@ const StorePage: React.FC = () => {
 
   const [seller, setSeller] = useState<SellerProfile | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewerNames, setReviewerNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!userId) return;
     const load = async () => {
       setLoading(true);
-      const [{ data: profileData }, { data: productData }] = await Promise.all([
+      const [{ data: profileData }, { data: productData }, { data: reviewData }] = await Promise.all([
         supabase.from('profiles').select('user_id, nickname, phone, community, school, avatar_url').eq('user_id', userId).single(),
         supabase.from('products').select('*').eq('seller_id', userId).in('status', ['on_sale', 'in_trade']).order('created_at', { ascending: false }),
+        supabase.from('reviews').select('*').eq('reviewee_id', userId).order('created_at', { ascending: false }),
       ]);
 
       if (profileData) setSeller(profileData);
       if (productData) setProducts(productData as Product[]);
+      if (reviewData) {
+        setReviews(reviewData as Review[]);
+        // Load reviewer names
+        const reviewerIds = [...new Set(reviewData.map(r => r.reviewer_id))];
+        if (reviewerIds.length > 0) {
+          const { data: reviewerProfiles } = await supabase
+            .from('profiles')
+            .select('user_id, nickname')
+            .in('user_id', reviewerIds);
+          if (reviewerProfiles) {
+            const map: Record<string, string> = {};
+            reviewerProfiles.forEach(p => { map[p.user_id] = p.nickname; });
+            setReviewerNames(map);
+          }
+        }
+      }
       setLoading(false);
     };
     load();
   }, [userId]);
 
-  const maskPhone = (phone: string) => {
-    if (!phone || phone.length < 7) return phone;
-    return phone.slice(0, 3) + '****' + phone.slice(-4);
-  };
+  // Calculate composite score: (buyer avg × 0.6) + (seller cooperation avg × 0.4)
+  const compositeScore = useMemo(() => {
+    if (reviews.length === 0) return null;
+    const buyerReviews = reviews.filter(r => r.reviewer_role === 'buyer');
+    const sellerReviews = reviews.filter(r => r.reviewer_role === 'seller');
+
+    // Buyer reviews: use description_match_score if available, otherwise cooperation_score
+    const buyerAvg = buyerReviews.length > 0
+      ? buyerReviews.reduce((sum, r) => sum + (r.description_match_score ?? r.cooperation_score), 0) / buyerReviews.length
+      : null;
+
+    // Seller reviews: use cooperation_score
+    const sellerAvg = sellerReviews.length > 0
+      ? sellerReviews.reduce((sum, r) => sum + r.cooperation_score, 0) / sellerReviews.length
+      : null;
+
+    let score: number;
+    if (buyerAvg !== null && sellerAvg !== null) {
+      score = buyerAvg * 0.6 + sellerAvg * 0.4;
+    } else if (buyerAvg !== null) {
+      score = buyerAvg;
+    } else if (sellerAvg !== null) {
+      score = sellerAvg;
+    } else {
+      return null;
+    }
+    return Math.max(1.0, Math.min(5.0, Math.round(score * 10) / 10));
+  }, [reviews]);
 
   const isSelf = user?.id === userId;
+
+  const addToCart = async (productId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      navigate('/auth', { state: { from: `/store/${userId}` } });
+      return;
+    }
+    const { error } = await supabase.from('cart_items').insert({
+      user_id: user.id,
+      product_id: productId,
+    });
+    if (error) {
+      if (error.code === '23505') {
+        toast({ title: '该物品已在购物车中' });
+      } else {
+        toast({ title: '加入购物车失败', variant: 'destructive' });
+      }
+    } else {
+      toast({ title: '已加入购物车 🛒' });
+    }
+  };
 
   if (loading) {
     return (
@@ -80,8 +179,17 @@ const StorePage: React.FC = () => {
         </div>
         <div className="animate-pulse p-4 space-y-4">
           <div className="h-20 bg-muted rounded-xl" />
-          <div className="grid grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-52 bg-muted rounded-xl" />)}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="bg-card rounded-xl border border-border flex">
+                <div className="w-24 h-32 bg-muted rounded-l-xl shrink-0" />
+                <div className="p-2.5 space-y-2 flex-1">
+                  <div className="h-4 bg-muted rounded w-3/4" />
+                  <div className="h-3 bg-muted rounded w-1/2" />
+                  <div className="h-4 bg-muted rounded w-1/3" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -128,6 +236,14 @@ const StorePage: React.FC = () => {
                 {seller.school && <span>📚 {seller.school}</span>}
                 {seller.community && <span>🏠 {seller.community}</span>}
               </div>
+              {/* Composite Score */}
+              {compositeScore !== null && (
+                <div className="flex items-center gap-2 mt-1.5">
+                  <StarDisplay score={compositeScore} />
+                  <span className="text-sm font-semibold text-accent">{compositeScore.toFixed(1)}</span>
+                  <span className="text-xs text-muted-foreground">({reviews.length}条评价)</span>
+                </div>
+              )}
             </div>
             <div className="flex flex-col items-center gap-2 shrink-0">
               <div className="text-right">
@@ -153,54 +269,123 @@ const StorePage: React.FC = () => {
           </div>
         )}
 
-        {/* Products Grid */}
-        {products.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-            <div className="text-5xl mb-3">🏪</div>
-            <p>{isSelf ? '你还没有在售商品' : '该店铺暂无在售商品'}</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {products.map(product => (
-              <div
-                key={product.id}
-                className="bg-card rounded-xl border border-border overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate(`/product/${product.id}`)}
-              >
-                <div className="aspect-square bg-muted relative">
-                  {product.cover_image_url ? (
-                    <img src={product.cover_image_url} alt={product.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-4xl">
-                      {product.type === 'book' ? '📖' : '📦'}
+        {/* Products - Index-style horizontal cards */}
+        <div>
+          <h2 className="font-semibold text-foreground text-sm mb-3">在售物品</h2>
+          {products.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <div className="text-5xl mb-3">🏪</div>
+              <p>{isSelf ? '你还没有在售商品' : '该店铺暂无在售商品'}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {products.map((product) => {
+                const infoLine = [product.school, product.grade?.join('/'), product.semester].filter(Boolean).join(' | ');
+                return (
+                  <div
+                    key={product.id}
+                    className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-md transition-shadow cursor-pointer group flex"
+                    onClick={() => navigate(`/product/${product.id}`)}
+                  >
+                    {/* Cover */}
+                    <div className="w-24 bg-muted relative overflow-hidden shrink-0 self-stretch">
+                      {product.cover_image_url ? (
+                        <img
+                          src={product.cover_image_url}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          <div className="text-2xl">{product.type === 'book' ? '📖' : '📦'}</div>
+                        </div>
+                      )}
+                      {product.status === 'in_trade' && (
+                        <div className="absolute top-1 left-1">
+                          <Badge variant="secondary" className="text-[10px] px-1 py-0 bg-accent text-accent-foreground">交易中</Badge>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {product.status === 'in_trade' && (
-                    <div className="absolute top-2 right-2">
-                      <Badge className="bg-accent text-accent-foreground text-xs">交易中</Badge>
+
+                    {/* Info */}
+                    <div className="flex-1 p-2.5 flex flex-col justify-between min-w-0">
+                      <div className="space-y-1">
+                        <h3 className="font-medium text-sm text-foreground line-clamp-1">{product.name}</h3>
+                        {product.type === 'book' && product.author && (
+                          <p className="text-xs text-muted-foreground line-clamp-1">{product.author}</p>
+                        )}
+                        {infoLine && (
+                          <p className="text-xs text-muted-foreground line-clamp-1">{infoLine}</p>
+                        )}
+                        {product.type === 'book' && CONDITIONS[product.condition] && (
+                          <Badge variant="secondary" className="text-[10px]">{CONDITIONS[product.condition]}</Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-primary font-bold text-sm">¥{product.price}</span>
+                        {!isSelf && product.status === 'on_sale' && (
+                          <button
+                            onClick={(e) => addToCart(product.id, e)}
+                            className="p-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          >
+                            <ShoppingCart className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-                <div className="p-2.5">
-                  <p className="text-sm font-medium text-foreground line-clamp-2 leading-snug mb-1.5">{product.name}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-primary font-bold text-sm">¥{product.price}</span>
-                    {CONDITIONS[product.condition] && (
-                      <span className="text-xs text-muted-foreground">{CONDITIONS[product.condition]}</span>
-                    )}
                   </div>
-                  {product.grade && product.grade.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {product.grade.slice(0, 2).map(g => (
-                        <Badge key={g} variant="outline" className="text-xs px-1.5 py-0">{g}</Badge>
-                      ))}
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Reviews Section */}
+        <div>
+          <h2 className="font-semibold text-foreground text-sm mb-3">
+            用户评价 {reviews.length > 0 && <span className="text-muted-foreground font-normal">({reviews.length})</span>}
+          </h2>
+          {reviews.length === 0 ? (
+            <div className="bg-card rounded-xl border border-border p-6 text-center text-muted-foreground text-sm">
+              暂无评价
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {reviews.map((review) => {
+                const reviewerName = reviewerNames[review.reviewer_id] || '匿名';
+                const roleLabel = review.reviewer_role === 'buyer' ? '买家' : '卖家';
+                const score = review.reviewer_role === 'buyer'
+                  ? (review.description_match_score ?? review.cooperation_score)
+                  : review.cooperation_score;
+                return (
+                  <div key={review.id} className="bg-card rounded-xl border border-border p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground">{maskName(reviewerName)}</span>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">{roleLabel}</Badge>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <StarDisplay score={score} />
+                        <span className="text-xs text-muted-foreground">{score}分</span>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                    {review.content ? (
+                      <p className="text-sm text-foreground">{review.content}</p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">
+                        {review.is_default ? '系统默认好评' : '该用户未留下文字评价'}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {new Date(review.created_at).toLocaleDateString('zh-CN')}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
