@@ -342,8 +342,13 @@ const Index: React.FC = () => {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="pl-9"
+              className="pl-9 pr-8"
             />
+            {searchText && (
+              <button onClick={() => { setSearchText(''); setActiveSearch(''); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
           {activeSearch ? (
             <Button variant="outline" size="sm" onClick={handleCancelSearch} className="shrink-0 h-10">
