@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, X, Loader2 } from 'lucide-react';
+import { Camera, X, Loader2, AlertTriangle, Lightbulb } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GradeSemesterSelector } from '@/components/auth/GradeSemesterSelector';
 
 const CONDITIONS = [
@@ -18,19 +20,7 @@ const CONDITIONS = [
   { value: 'heavily_used', label: '大量使用', desc: '较多笔记磨损，可正常使用' },
 ];
 
-const BOOK_TAGS = ['语文', '数学', '英语', '物理', '化学', '生物', '历史', '地理', '政治', '科学', '音乐', '美术', '体育', '综合', '课外读物', '练习册', '试卷', '其他'];
-
-const Chip: React.FC<{ label: string; selected: boolean; onClick: () => void }> = ({ label, selected, onClick }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`px-3 py-1 rounded-full text-sm transition-colors whitespace-nowrap ${
-      selected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-    }`}
-  >
-    {label}
-  </button>
-);
+const BOOK_TAGS = ['学校推荐', '课外书', '教材教辅', '兴趣书', '工具书', '绘本', '课外读物', '其他'];
 
 const PublishPage: React.FC = () => {
   const navigate = useNavigate();
@@ -48,9 +38,7 @@ const PublishPage: React.FC = () => {
   const [semester, setSemester] = useState('');
   const [bookTag, setBookTag] = useState('');
   const [condition, setCondition] = useState('');
-  const [conditionNote, setConditionNote] = useState('');
   const [description, setDescription] = useState('');
-  const [defectDescription, setDefectDescription] = useState('');
   const [price, setPrice] = useState('');
   const [school, setSchool] = useState('');
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -77,9 +65,11 @@ const PublishPage: React.FC = () => {
     }
   }, []);
 
-  // Default school from profile
+  // Default school/grade/semester from profile
   useEffect(() => {
     if (profile?.school && !school) setSchool(profile.school);
+    if (profile?.child_grade && !grade) setGrade(profile.child_grade);
+    if (profile?.child_semester && !semester) setSemester(profile.child_semester);
   }, [profile]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,10 +89,8 @@ const PublishPage: React.FC = () => {
 
     if (!name.trim()) { toast({ title: '请输入名称', variant: 'destructive' }); return; }
     if (!price || Number(price) <= 0) { toast({ title: '请输入有效价格', variant: 'destructive' }); return; }
+    if (type === 'book' && !bookTag) { toast({ title: '请选择书籍标签', variant: 'destructive' }); return; }
     if (type === 'book' && !condition) { toast({ title: '请选择成色', variant: 'destructive' }); return; }
-    if (type === 'other' && !condition) {
-      // For "other" type, default to "used"
-    }
 
     setSubmitting(true);
 
@@ -134,9 +122,9 @@ const PublishPage: React.FC = () => {
       semester: semester || null,
       book_tag: type === 'book' ? (bookTag || null) : null,
       condition: (type === 'book' ? condition : (condition || 'used')) as any,
-      condition_note: conditionNote.trim() || null,
+      condition_note: null,
       description: description.trim() || null,
-      defect_description: defectDescription.trim() || null,
+      defect_description: null,
       price: Number(price),
       school: school.trim() || null,
       cover_image_url: coverUrl,
@@ -153,64 +141,114 @@ const PublishPage: React.FC = () => {
     navigate('/my-products');
   };
 
+  const BookNotice = () => (
+    <div className="space-y-2 mb-4">
+      <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+        <span>请确保上架书籍为正版，盗版/影印版书籍严禁上架。经发现将被下架处理；多次违规或情节严重者，将予以封号。</span>
+      </div>
+      <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
+        <Lightbulb className="h-4 w-4 mt-0.5 shrink-0" />
+        <span>信息越丰富，越容易被他人查找到</span>
+      </div>
+    </div>
+  );
+
+  const OtherNotice = () => (
+    <div className="space-y-2 mb-4">
+      <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+        <span>请确保物品为正品，并如实描述详细情况。</span>
+      </div>
+      <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
+        <Lightbulb className="h-4 w-4 mt-0.5 shrink-0" />
+        <span>信息越丰富，越容易被他人查找到</span>
+      </div>
+    </div>
+  );
+
+  // Shared fields: cover, school, grade/semester, price, description
+  const SharedFields = () => (
+    <>
+      {/* Cover image */}
+      <div className="space-y-2">
+        <Label>封面图片</Label>
+        <div className="flex items-start gap-3">
+          {coverPreview ? (
+            <div className="relative w-24 h-[136px] rounded-lg overflow-hidden border border-border">
+              <img src={coverPreview} alt="封面" className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={() => { setCoverFile(null); setCoverPreview(null); }}
+                className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-24 h-[136px] rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+            >
+              <Camera className="h-6 w-6 mb-1" />
+              <span className="text-xs">添加图片</span>
+            </button>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageSelect}
+          />
+        </div>
+      </div>
+    </>
+  );
+
+  const SchoolAndGradeFields = () => (
+    <>
+      {/* School */}
+      <div className="space-y-2">
+        <Label>适用学校</Label>
+        <Input value={school} onChange={(e) => setSchool(e.target.value)} placeholder="适用的学校名称（选填）" />
+      </div>
+
+      {/* Grade & Semester */}
+      <div className="space-y-2">
+        <Label>适用年级与学期</Label>
+        <GradeSemesterSelector
+          grade={grade}
+          semester={semester}
+          onChange={(g, s) => { setGrade(g); setSemester(s); }}
+        />
+      </div>
+    </>
+  );
+
   return (
     <div className="container mx-auto max-w-2xl px-4 py-6">
       <h1 className="text-lg font-semibold text-foreground mb-4">发布物品</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Type */}
-        <div className="space-y-2">
-          <Label>类型</Label>
-          <div className="flex gap-2">
-            <Chip label="书籍" selected={type === 'book'} onClick={() => setType('book')} />
-            <Chip label="其他" selected={type === 'other'} onClick={() => setType('other')} />
-          </div>
-        </div>
+      <Tabs value={type} onValueChange={(v) => setType(v as 'book' | 'other')}>
+        <TabsList className="w-full grid grid-cols-2 mb-4">
+          <TabsTrigger value="book" className="text-base">📚 书籍</TabsTrigger>
+          <TabsTrigger value="other" className="text-base">📦 其他</TabsTrigger>
+        </TabsList>
 
-        {/* Cover image */}
-        <div className="space-y-2">
-          <Label>封面图片</Label>
-          <div className="flex items-start gap-3">
-            {coverPreview ? (
-              <div className="relative w-24 h-[136px] rounded-lg overflow-hidden border border-border">
-                <img src={coverPreview} alt="封面" className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => { setCoverFile(null); setCoverPreview(null); }}
-                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-24 h-[136px] rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-              >
-                <Camera className="h-6 w-6 mb-1" />
-                <span className="text-xs">添加图片</span>
-              </button>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageSelect}
-            />
-          </div>
-        </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <TabsContent value="book" className="mt-0 space-y-5">
+            <BookNotice />
+            <SharedFields />
 
-        {/* Name */}
-        <div className="space-y-2">
-          <Label>{type === 'book' ? '书名' : '物品名称'} *</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={type === 'book' ? '请输入书名' : '请输入物品名称'} />
-        </div>
+            {/* Book name */}
+            <div className="space-y-2">
+              <Label>书名 *</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="请输入书名" />
+            </div>
 
-        {/* Book-specific fields */}
-        {type === 'book' && (
-          <>
+            {/* Author & Translator */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>作者</Label>
@@ -221,6 +259,8 @@ const PublishPage: React.FC = () => {
                 <Input value={translator} onChange={(e) => setTranslator(e.target.value)} placeholder="译者姓名（选填）" />
               </div>
             </div>
+
+            {/* Publisher & Date */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>出版社</Label>
@@ -232,14 +272,19 @@ const PublishPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Book tag */}
+            {/* Book tag - dropdown, required */}
             <div className="space-y-2">
-              <Label>科目分类</Label>
-              <div className="flex flex-wrap gap-2">
-                {BOOK_TAGS.map(tag => (
-                  <Chip key={tag} label={tag} selected={bookTag === tag} onClick={() => setBookTag(bookTag === tag ? '' : tag)} />
-                ))}
-              </div>
+              <Label>书籍标签 *</Label>
+              <Select value={bookTag} onValueChange={setBookTag}>
+                <SelectTrigger>
+                  <SelectValue placeholder="请选择书籍标签" />
+                </SelectTrigger>
+                <SelectContent>
+                  {BOOK_TAGS.map(tag => (
+                    <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Condition */}
@@ -263,80 +308,62 @@ const PublishPage: React.FC = () => {
                 ))}
               </div>
             </div>
-          </>
-        )}
 
-        {/* Grade & Semester */}
-        <div className="space-y-2">
-          <Label>年级与学期</Label>
-          <GradeSemesterSelector
-            grade={grade}
-            semester={semester}
-            onChange={(g, s) => { setGrade(g); setSemester(s); }}
-          />
-        </div>
+            <SchoolAndGradeFields />
+          </TabsContent>
 
-        {/* School */}
-        <div className="space-y-2">
-          <Label>适用学校</Label>
-          <Input value={school} onChange={(e) => setSchool(e.target.value)} placeholder="适用的学校名称（选填）" />
-        </div>
+          <TabsContent value="other" className="mt-0 space-y-5">
+            <OtherNotice />
+            <SharedFields />
 
-        {/* Price */}
-        <div className="space-y-2">
-          <Label>价格 *</Label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">¥</span>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="0.00"
-              className="pl-8"
+            {/* Item name */}
+            <div className="space-y-2">
+              <Label>物品名称 *</Label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="请输入物品名称（10字以内）"
+                maxLength={10}
+              />
+            </div>
+
+            <SchoolAndGradeFields />
+          </TabsContent>
+
+          {/* Price */}
+          <div className="space-y-2">
+            <Label>价格 *</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">¥</span>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="0.00"
+                className="pl-8"
+              />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label>描述</Label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="关于这件物品的更多描述（选填）"
+              rows={3}
             />
           </div>
-        </div>
 
-        {/* Condition note */}
-        <div className="space-y-2">
-          <Label>成色说明</Label>
-          <Textarea
-            value={conditionNote}
-            onChange={(e) => setConditionNote(e.target.value)}
-            placeholder="补充描述成色细节（选填）"
-            rows={2}
-          />
-        </div>
-
-        {/* Description */}
-        <div className="space-y-2">
-          <Label>描述</Label>
-          <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="关于这件物品的更多描述（选填）"
-            rows={3}
-          />
-        </div>
-
-        {/* Defect description */}
-        <div className="space-y-2">
-          <Label>瑕疵说明</Label>
-          <Textarea
-            value={defectDescription}
-            onChange={(e) => setDefectDescription(e.target.value)}
-            placeholder="如有瑕疵请如实描述（选填）"
-            rows={2}
-          />
-        </div>
-
-        <Button type="submit" className="w-full" disabled={submitting}>
-          {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          发布
-        </Button>
-      </form>
+          <Button type="submit" className="w-full" disabled={submitting}>
+            {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            发布
+          </Button>
+        </form>
+      </Tabs>
     </div>
   );
 };
