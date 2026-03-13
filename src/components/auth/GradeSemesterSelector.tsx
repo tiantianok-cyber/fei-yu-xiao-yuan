@@ -49,9 +49,10 @@ export const GradeSemesterSelector: React.FC<GradeSemesterSelectorProps> = ({
       {/* Grade multi-select */}
       <div className="flex flex-wrap gap-2">
         {GRADES.map((g) => (
-          <label
+          <div
             key={g}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-sm cursor-pointer transition-colors ${
+            onClick={() => toggleGrade(g)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-sm cursor-pointer transition-colors select-none ${
               grades.includes(g)
                 ? 'border-primary bg-primary/10 text-foreground'
                 : 'border-border text-muted-foreground hover:border-primary/50'
@@ -59,11 +60,11 @@ export const GradeSemesterSelector: React.FC<GradeSemesterSelectorProps> = ({
           >
             <Checkbox
               checked={grades.includes(g)}
-              onCheckedChange={() => toggleGrade(g)}
-              className="h-4 w-4"
+              tabIndex={-1}
+              className="h-4 w-4 pointer-events-none"
             />
             {g}
-          </label>
+          </div>
         ))}
       </div>
 
