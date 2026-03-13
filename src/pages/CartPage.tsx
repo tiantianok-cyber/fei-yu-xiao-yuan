@@ -75,6 +75,9 @@ const CartPage: React.FC = () => {
 
     if (products) {
       const cartMap = new Map(cartData.map(c => [c.product_id, c.id]));
+      const returnedProductIds = new Set(products.map(p => p.id));
+      
+      // Products returned by query (visible via RLS)
       const cartProducts: CartProduct[] = products.map(p => ({
         cart_id: cartMap.get(p.id)!,
         product_id: p.id,
@@ -89,7 +92,26 @@ const CartPage: React.FC = () => {
         semester: p.semester,
         description: p.description,
       }));
-      setItems(cartProducts);
+      
+      // Cart items whose products are not visible (sold/deleted) — mark as sold
+      const unavailableItems: CartProduct[] = cartData
+        .filter(c => !returnedProductIds.has(c.product_id))
+        .map(c => ({
+          cart_id: c.id,
+          product_id: c.product_id,
+          name: '该物品已售出',
+          price: 0,
+          cover_image_url: null,
+          status: 'sold' as string,
+          seller_id: 'unknown',
+          type: 'other' as string,
+          school: null,
+          grade: null,
+          semester: null,
+          description: null,
+        }));
+      
+      setItems([...cartProducts, ...unavailableItems]);
 
       const sellerIds = [...new Set(cartProducts.map(p => p.seller_id))];
       const { data: sellerData } = await supabase
@@ -126,7 +148,8 @@ const CartPage: React.FC = () => {
   };
 
   const toggleSellerGroup = (sellerId: string) => {
-    const groupItems = groupedBySeller[sellerId] || [];
+    const groupItems = (groupedBySeller[sellerId] || []).filter(i => i.status === 'on_sale');
+    if (groupItems.length === 0) return;
     const allSelected = groupItems.every(i => selected.has(i.cart_id));
     setSelected(prev => {
       const next = new Set(prev);
@@ -295,16 +318,19 @@ const CartPage: React.FC = () => {
                 <div className="divide-y divide-border">
                   {sellerItems.map(item => {
                     const meta = formatItemMeta(item);
+                    const isSold = item.status === 'sold';
+                    const isUnavailable = isSold || (item.status !== 'on_sale' && item.status !== 'in_trade');
                     return (
-                      <div key={item.cart_id} className="px-4 py-3 flex items-start gap-3">
+                      <div key={item.cart_id} className={`px-4 py-3 flex items-start gap-3 ${isSold ? 'opacity-60' : ''}`}>
                         <Checkbox
                           className="mt-1"
                           checked={selected.has(item.cart_id)}
-                          onCheckedChange={() => toggleSelect(item.cart_id)}
+                          onCheckedChange={() => !isUnavailable && toggleSelect(item.cart_id)}
+                          disabled={isUnavailable}
                         />
                         <div
                           className="w-14 h-[78px] bg-muted rounded-lg overflow-hidden shrink-0 cursor-pointer relative"
-                          onClick={() => navigate(`/product/${item.product_id}`)}
+                          onClick={() => !isSold && navigate(`/product/${item.product_id}`)}
                         >
                           {item.cover_image_url ? (
                             <img src={item.cover_image_url} alt={item.name} className="w-full h-full object-cover" />
@@ -316,21 +342,32 @@ const CartPage: React.FC = () => {
                               <span className="text-[10px] font-semibold text-white">交易中</span>
                             </div>
                           )}
+                          {isSold && (
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                              <span className="text-[10px] font-semibold text-white">已售出</span>
+                            </div>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground line-clamp-1">{item.name}</p>
-                          {meta && (
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{meta}</p>
-                          )}
-                          {item.description && (
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>
-                          )}
-                          <p className="text-primary font-bold text-sm mt-1">¥{item.price}</p>
-                          {item.status === 'in_trade' && (
-                            <Badge className="bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0">交易中</Badge>
-                          )}
-                          {item.status !== 'on_sale' && item.status !== 'in_trade' && (
-                            <span className="text-xs text-destructive">已下架</span>
+                          {isSold ? (
+                            <Badge className="bg-muted text-muted-foreground text-[10px] px-1.5 py-0 mt-1">已售出</Badge>
+                          ) : (
+                            <>
+                              {meta && (
+                                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{meta}</p>
+                              )}
+                              {item.description && (
+                                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>
+                              )}
+                              <p className="text-primary font-bold text-sm mt-1">¥{item.price}</p>
+                              {item.status === 'in_trade' && (
+                                <Badge className="bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0">交易中</Badge>
+                              )}
+                              {item.status === 'off_shelf' && (
+                                <span className="text-xs text-destructive">已下架</span>
+                              )}
+                            </>
                           )}
                         </div>
                         <button
