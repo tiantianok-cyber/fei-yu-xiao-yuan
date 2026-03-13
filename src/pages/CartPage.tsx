@@ -93,7 +93,7 @@ const CartPage: React.FC = () => {
       const sellerIds = [...new Set(cartProducts.map(p => p.seller_id))];
       const { data: sellerData } = await supabase
         .from('profiles')
-        .select('user_id, nickname, phone, community, school')
+        .select('user_id, nickname, phone, community, school, city, district')
         .in('user_id', sellerIds);
       if (sellerData) {
         const map: Record<string, SellerInfo> = {};
