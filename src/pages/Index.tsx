@@ -145,26 +145,37 @@ const SearchableTagInput: React.FC<{
     </div>
   );
 };
+const FILTER_STORAGE_KEY = 'fei-yu-home-filters';
+
+const loadSavedFilters = () => {
+  try {
+    const saved = sessionStorage.getItem(FILTER_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : null;
+  } catch { return null; }
+};
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { toast } = useToast();
 
+  const saved = useMemo(() => loadSavedFilters(), []);
+
   // City filter
-  const [filterCity, setFilterCity] = useState('');
-  const [filterDistrict, setFilterDistrict] = useState('');
-  const [filterProvince, setFilterProvince] = useState('');
+  const [filterCity, setFilterCity] = useState(saved?.filterCity || '');
+  const [filterDistrict, setFilterDistrict] = useState(saved?.filterDistrict || '');
+  const [filterProvince, setFilterProvince] = useState(saved?.filterProvince || '');
 
   // Filters
   const [searchText, setSearchText] = useState('');
   const [activeSearch, setActiveSearch] = useState('');
-  const [filterType, setFilterType] = useState<string>('all');
-  const [filterGrade, setFilterGrade] = useState<string>('all');
-  const [filterSemester, setFilterSemester] = useState<string>('all');
-  const [filterCondition, setFilterCondition] = useState<string>('all');
-  const [filterSchools, setFilterSchools] = useState<string[]>([]);
-  const [filterCommunities, setFilterCommunities] = useState<string[]>([]);
+  const [filterType, setFilterType] = useState<string>(saved?.filterType || 'all');
+  const [filterGrade, setFilterGrade] = useState<string>(saved?.filterGrade || 'all');
+  const [filterSemester, setFilterSemester] = useState<string>(saved?.filterSemester || 'all');
+  const [filterCondition, setFilterCondition] = useState<string>(saved?.filterCondition || 'all');
+  const [filterSchools, setFilterSchools] = useState<string[]>(saved?.filterSchools || []);
+  const [filterCommunities, setFilterCommunities] = useState<string[]>(saved?.filterCommunities || []);
+  const [profileInitialized, setProfileInitialized] = useState(!!saved);
 
   // Data
   const [products, setProducts] = useState<Product[]>([]);
@@ -174,14 +185,25 @@ const Index: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [cityUserIds, setCityUserIds] = useState<string[] | null>(null);
 
-  // Initialize from profile
+  // Initialize from profile (only if no saved filters)
   useEffect(() => {
+    if (profileInitialized) return;
     if (profile) {
       if (profile.city) setFilterCity(profile.city);
       if (profile.district) setFilterDistrict(profile.district);
       if (profile.province) setFilterProvince(profile.province);
+      setProfileInitialized(true);
     }
-  }, [profile]);
+  }, [profile, profileInitialized]);
+
+  // Save filters to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
+      filterProvince, filterCity, filterDistrict,
+      filterType, filterGrade, filterSemester, filterCondition,
+      filterSchools, filterCommunities,
+    }));
+  }, [filterProvince, filterCity, filterDistrict, filterType, filterGrade, filterSemester, filterCondition, filterSchools, filterCommunities]);
 
   // Load users in selected city/district → derive cityUserIds
   useEffect(() => {
@@ -315,6 +337,7 @@ const Index: React.FC = () => {
     setFilterProvince('');
     setFilterCity('');
     setFilterDistrict('');
+    sessionStorage.removeItem(FILTER_STORAGE_KEY);
   };
 
   const addToCart = async (productId: string, e: React.MouseEvent) => {
