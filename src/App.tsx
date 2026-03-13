@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/AppLayout";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
+import ProductDetail from "./pages/ProductDetail";
 import NotFound from "./pages/NotFound";
 
 // Placeholder pages - will be built in later batches
@@ -31,7 +32,7 @@ const App = () => (
           <Routes>
             <Route element={<AppLayout />}>
               <Route path="/" element={<Index />} />
-              <Route path="/product/:id" element={<PlaceholderPage title="商品详情" />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/publish" element={<PlaceholderPage title="发布物品" />} />
               <Route path="/cart" element={<PlaceholderPage title="购物车" />} />
               <Route path="/orders" element={<PlaceholderPage title="订单" />} />
