@@ -60,7 +60,7 @@ export const GradeSemesterSelector: React.FC<GradeSemesterSelectorProps> = ({
             <Checkbox
               checked={grades.includes(g)}
               onCheckedChange={() => toggleGrade(g)}
-              className="h-3.5 w-3.5"
+              className="h-4 w-4"
             />
             {g}
           </label>
