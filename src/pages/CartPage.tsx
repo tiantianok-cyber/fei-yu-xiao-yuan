@@ -148,7 +148,8 @@ const CartPage: React.FC = () => {
   };
 
   const toggleSellerGroup = (sellerId: string) => {
-    const groupItems = groupedBySeller[sellerId] || [];
+    const groupItems = (groupedBySeller[sellerId] || []).filter(i => i.status === 'on_sale');
+    if (groupItems.length === 0) return;
     const allSelected = groupItems.every(i => selected.has(i.cart_id));
     setSelected(prev => {
       const next = new Set(prev);
