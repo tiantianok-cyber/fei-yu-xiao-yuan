@@ -14,7 +14,7 @@ const navItems = [
 export const TopNav: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const [showMyMenu, setShowMyMenu] = useState(false);
 
   const handleNavClick = (path: string) => {
