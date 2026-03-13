@@ -24,6 +24,10 @@ interface CartProduct {
   status: string;
   seller_id: string;
   type: string;
+  school: string | null;
+  grade: string[] | null;
+  semester: string | null;
+  description: string | null;
 }
 
 interface SellerInfo {
@@ -63,7 +67,7 @@ const CartPage: React.FC = () => {
     const productIds = cartData.map(c => c.product_id);
     const { data: products } = await supabase
       .from('products')
-      .select('id, name, price, cover_image_url, status, seller_id, type')
+      .select('id, name, price, cover_image_url, status, seller_id, type, school, grade, semester, description')
       .in('id', productIds);
 
     if (products) {
@@ -77,10 +81,13 @@ const CartPage: React.FC = () => {
         status: p.status,
         seller_id: p.seller_id,
         type: p.type,
+        school: p.school,
+        grade: p.grade,
+        semester: p.semester,
+        description: p.description,
       }));
       setItems(cartProducts);
 
-      // Load seller info
       const sellerIds = [...new Set(cartProducts.map(p => p.seller_id))];
       const { data: sellerData } = await supabase
         .from('profiles')
@@ -138,7 +145,6 @@ const CartPage: React.FC = () => {
   const selectedItems = items.filter(i => selected.has(i.cart_id));
   const totalPrice = selectedItems.reduce((sum, i) => sum + i.price, 0);
 
-  // Group selected items by seller for confirm dialog
   const selectedBySeller = useMemo(() => {
     const groups: Record<string, CartProduct[]> = {};
     selectedItems.forEach(item => {
@@ -153,9 +159,7 @@ const CartPage: React.FC = () => {
     setSubmitting(true);
 
     try {
-      // Create orders grouped by seller
       for (const [sellerId, sellerItems] of Object.entries(selectedBySeller)) {
-        // Check all items are still on_sale
         const unavailable = sellerItems.filter(i => i.status !== 'on_sale');
         if (unavailable.length > 0) {
           toast({ title: `"${unavailable[0].name}" 已不可购买`, variant: 'destructive' });
@@ -165,7 +169,6 @@ const CartPage: React.FC = () => {
           return;
         }
 
-        // Create order
         const { data: order, error: orderError } = await supabase
           .from('orders')
           .insert({ buyer_id: user.id, seller_id: sellerId })
@@ -178,7 +181,6 @@ const CartPage: React.FC = () => {
           return;
         }
 
-        // Create order items
         const orderItems = sellerItems.map(item => ({
           order_id: order.id,
           product_id: item.product_id,
@@ -186,13 +188,11 @@ const CartPage: React.FC = () => {
         }));
         await supabase.from('order_items').insert(orderItems);
 
-        // Update product status to in_trade
         await supabase
           .from('products')
           .update({ status: 'in_trade' as any })
           .in('id', sellerItems.map(i => i.product_id));
 
-        // Remove from cart
         await supabase
           .from('cart_items')
           .delete()
@@ -208,6 +208,14 @@ const CartPage: React.FC = () => {
       toast({ title: '操作失败，请重试', variant: 'destructive' });
     }
     setSubmitting(false);
+  };
+
+  const formatItemMeta = (item: CartProduct) => {
+    const parts: string[] = [];
+    if (item.school) parts.push(item.school);
+    if (item.grade?.length) parts.push(item.grade.join('、'));
+    if (item.semester) parts.push(item.semester);
+    return parts.join(' · ');
   };
 
   if (loading) {
@@ -251,57 +259,75 @@ const CartPage: React.FC = () => {
             return (
               <div key={sellerId} className="bg-card rounded-xl border border-border overflow-hidden">
                 {/* Seller header */}
-                <div className="px-4 py-2.5 border-b border-border flex items-center gap-2 bg-muted/30">
-                  <Checkbox
-                    checked={allSelected}
-                    onCheckedChange={() => toggleSellerGroup(sellerId)}
-                  />
-                  <span className="text-sm font-medium text-foreground">
-                    {seller?.nickname || '卖家'}
-                  </span>
-                  {seller && (
-                    <button
-                      onClick={() => navigate(`/store/${sellerId}`)}
-                      className="text-xs text-primary hover:underline ml-auto"
-                    >
-                      进入店铺
-                    </button>
-                  )}
+                <div className="px-4 py-2.5 border-b border-border bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={() => toggleSellerGroup(sellerId)}
+                    />
+                    <span className="text-sm font-medium text-foreground">
+                      {seller?.nickname || '卖家'}
+                    </span>
+                    {seller?.community && (
+                      <span className="text-xs text-muted-foreground">· {seller.community}</span>
+                    )}
+                    {seller?.phone && (
+                      <span className="text-xs text-muted-foreground">· {seller.phone}</span>
+                    )}
+                    {seller && (
+                      <button
+                        onClick={() => navigate(`/store/${sellerId}`)}
+                        className="text-xs text-primary hover:underline ml-auto"
+                      >
+                        进入店铺
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Items */}
                 <div className="divide-y divide-border">
-                  {sellerItems.map(item => (
-                    <div key={item.cart_id} className="px-4 py-3 flex items-center gap-3">
-                      <Checkbox
-                        checked={selected.has(item.cart_id)}
-                        onCheckedChange={() => toggleSelect(item.cart_id)}
-                      />
-                      <div
-                        className="w-14 h-[78px] bg-muted rounded-lg overflow-hidden shrink-0 cursor-pointer"
-                        onClick={() => navigate(`/product/${item.product_id}`)}
-                      >
-                        {item.cover_image_url ? (
-                          <img src={item.cover_image_url} alt={item.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-lg">📖</div>
-                        )}
+                  {sellerItems.map(item => {
+                    const meta = formatItemMeta(item);
+                    return (
+                      <div key={item.cart_id} className="px-4 py-3 flex items-start gap-3">
+                        <Checkbox
+                          className="mt-1"
+                          checked={selected.has(item.cart_id)}
+                          onCheckedChange={() => toggleSelect(item.cart_id)}
+                        />
+                        <div
+                          className="w-14 h-[78px] bg-muted rounded-lg overflow-hidden shrink-0 cursor-pointer"
+                          onClick={() => navigate(`/product/${item.product_id}`)}
+                        >
+                          {item.cover_image_url ? (
+                            <img src={item.cover_image_url} alt={item.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-lg">📖</div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground line-clamp-1">{item.name}</p>
+                          {meta && (
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{meta}</p>
+                          )}
+                          {item.description && (
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>
+                          )}
+                          <p className="text-primary font-bold text-sm mt-1">¥{item.price}</p>
+                          {item.status !== 'on_sale' && (
+                            <span className="text-xs text-destructive">已下架或交易中</span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => removeItem(item.cart_id)}
+                          className="p-1.5 text-muted-foreground hover:text-destructive transition-colors mt-1"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground line-clamp-1">{item.name}</p>
-                        <p className="text-primary font-bold text-sm mt-1">¥{item.price}</p>
-                        {item.status !== 'on_sale' && (
-                          <span className="text-xs text-destructive">已下架或交易中</span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => removeItem(item.cart_id)}
-                        className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -349,7 +375,9 @@ const CartPage: React.FC = () => {
             <div className="bg-muted/50 rounded-lg p-3">
               <p className="text-xs text-muted-foreground mb-1">买家信息</p>
               <p className="text-sm font-medium text-foreground">{profile?.nickname}</p>
-              <p className="text-xs text-muted-foreground">{profile?.phone}</p>
+              <p className="text-xs text-muted-foreground">
+                {[profile?.community, profile?.phone].filter(Boolean).join(' · ')}
+              </p>
             </div>
 
             {/* Orders by seller */}
@@ -360,7 +388,9 @@ const CartPage: React.FC = () => {
                 <div key={sellerId} className="bg-card rounded-lg border border-border overflow-hidden">
                   <div className="px-3 py-2 bg-muted/30 border-b border-border">
                     <p className="text-sm font-medium">{seller?.nickname || '卖家'}</p>
-                    <p className="text-xs text-muted-foreground">{seller?.phone}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {[seller?.community, seller?.phone].filter(Boolean).join(' · ')}
+                    </p>
                   </div>
                   <div className="divide-y divide-border">
                     {sellerItems.map(item => (
