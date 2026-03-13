@@ -61,7 +61,7 @@ const ProfilePage: React.FC = () => {
       setDistrict(profile.district || '');
       setCommunity(profile.community || '');
       setSchool(profile.school || '');
-      setChildGrade(profile.child_grade || '');
+      setChildGrade(normalizeGradeLabel(profile.child_grade || ''));
       setChildSemester(profile.child_semester || '');
       setAvatarUrl(profile.avatar_url);
     }
