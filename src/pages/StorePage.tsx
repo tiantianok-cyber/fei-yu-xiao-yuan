@@ -92,7 +92,7 @@ const StorePage: React.FC = () => {
     const load = async () => {
       setLoading(true);
       const [{ data: profileData }, { data: productData }, { data: reviewData }] = await Promise.all([
-        supabase.from('profiles').select('user_id, nickname, phone, community, school, avatar_url').eq('user_id', userId).single(),
+        supabase.from('profiles').select('user_id, nickname, phone, community, school, avatar_url, city, district').eq('user_id', userId).single(),
         supabase.from('products').select('*').eq('seller_id', userId).in('status', ['on_sale', 'in_trade']).order('created_at', { ascending: false }),
         supabase.from('reviews').select('*').eq('reviewee_id', userId).order('created_at', { ascending: false }),
       ]);
