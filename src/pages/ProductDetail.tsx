@@ -176,7 +176,6 @@ const ProductDetail: React.FC = () => {
     { label: '成色', value: cond ? `${cond.label} · ${cond.desc}` : null },
     { label: '成色说明', value: product.condition_note },
     { label: '浏览量', value: String(product.view_count) },
-    { label: '发布时间', value: new Date(product.created_at).toLocaleDateString('zh-CN') },
   ].filter(r => r.value);
 
   return (
