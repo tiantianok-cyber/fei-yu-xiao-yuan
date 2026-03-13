@@ -40,7 +40,7 @@ const App = () => (
               <Route path="/profile" element={<ProfilePage />} />
             </Route>
             <Route path="/auth" element={<AuthPage />} />
-            <Route path="/tianadmin" element={<PlaceholderPage title="管理后台" />} />
+            <Route path="/tianadmin" element={<AdminPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
