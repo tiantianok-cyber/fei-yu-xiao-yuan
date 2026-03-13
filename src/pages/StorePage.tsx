@@ -309,8 +309,8 @@ const StorePage: React.FC = () => {
                         </div>
                       )}
                       {product.status === 'in_trade' && (
-                        <div className="absolute top-1 left-1">
-                          <Badge variant="secondary" className="text-[10px] px-1 py-0 bg-accent text-accent-foreground">交易中</Badge>
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <Badge className="bg-destructive text-destructive-foreground text-xs px-2 py-0.5 font-semibold">交易中</Badge>
                         </div>
                       )}
                     </div>
