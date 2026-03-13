@@ -109,12 +109,19 @@ const AMapLocationPicker: React.FC<AMapLocationPickerProps> = ({ type, onConfirm
     markerRef.current = marker;
 
     // On marker drag end, re-search nearby POI
-    marker.on('dragend', (e: any) => {
-      const pos = e.target.getPosition();
+    marker.on('dragend', () => {
+      const pos = marker.getPosition();
       if (pos) {
         const lnglat: [number, number] = [pos.getLng(), pos.getLat()];
         searchNearbyPOI(lnglat);
       }
+    });
+
+    // On map click, move marker and re-search
+    map.on('click', (e: any) => {
+      const { lng, lat } = e.lnglat;
+      marker.setPosition([lng, lat]);
+      searchNearbyPOI([lng, lat]);
     });
 
     // Load PlaceSearch plugin
