@@ -39,7 +39,7 @@ interface CitySelectorProps {
 
 let cachedData: CityData | null = null;
 
-export const CitySelector: React.FC<CitySelectorProps> = ({ province, city, district, onChange }) => {
+export const CitySelector: React.FC<CitySelectorProps> = ({ province, city, district, onChange, showLocatePrompt }) => {
   const [data, setData] = useState<CityData | null>(cachedData);
   const [loading, setLoading] = useState(!cachedData);
   const [locating, setLocating] = useState(false);
