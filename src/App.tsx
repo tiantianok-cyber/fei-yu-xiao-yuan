@@ -8,6 +8,10 @@ import { AppLayout } from "@/components/AppLayout";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import ProductDetail from "./pages/ProductDetail";
+import PublishPage from "./pages/PublishPage";
+import CartPage from "./pages/CartPage";
+import OrdersPage from "./pages/OrdersPage";
+import MyProductsPage from "./pages/MyProductsPage";
 import NotFound from "./pages/NotFound";
 
 // Placeholder pages - will be built in later batches
@@ -33,10 +37,10 @@ const App = () => (
             <Route element={<AppLayout />}>
               <Route path="/" element={<Index />} />
               <Route path="/product/:id" element={<ProductDetail />} />
-              <Route path="/publish" element={<PlaceholderPage title="发布物品" />} />
-              <Route path="/cart" element={<PlaceholderPage title="购物车" />} />
-              <Route path="/orders" element={<PlaceholderPage title="订单" />} />
-              <Route path="/my-products" element={<PlaceholderPage title="我的发布" />} />
+              <Route path="/publish" element={<PublishPage />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/orders" element={<OrdersPage />} />
+              <Route path="/my-products" element={<MyProductsPage />} />
               <Route path="/store/:userId" element={<PlaceholderPage title="店铺" />} />
               <Route path="/profile" element={<PlaceholderPage title="个人中心" />} />
             </Route>
