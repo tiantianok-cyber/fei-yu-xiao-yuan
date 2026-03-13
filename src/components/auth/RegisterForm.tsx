@@ -202,10 +202,10 @@ const RegisterForm: React.FC<{ onSwitchToLogin: () => void }> = ({ onSwitchToLog
         <div className="space-y-1.5">
           <Label>孩子的年级和学期</Label>
           <GradeSemesterSelector
-            grade={form.childGrade}
+            grades={form.childGrade ? [form.childGrade] : []}
             semester={form.childSemester}
             onChange={(g, s) => {
-              updateForm('childGrade', g);
+              updateForm('childGrade', g.length > 0 ? g[g.length - 1] : '');
               updateForm('childSemester', s);
             }}
           />
