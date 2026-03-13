@@ -269,6 +269,9 @@ const CartPage: React.FC = () => {
                     />
                     <span className="text-sm font-medium text-foreground">
                       {seller?.nickname || '卖家'}
+                      {seller && (seller.city || seller.district) && (
+                        <span className="text-muted-foreground font-normal"> | {[seller.city, seller.district].filter(Boolean).join('')}</span>
+                      )}
                     </span>
                     {seller?.community && (
                       <span className="text-xs text-muted-foreground">· {seller.community}</span>
