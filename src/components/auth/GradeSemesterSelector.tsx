@@ -69,25 +69,27 @@ export const GradeSemesterSelector: React.FC<GradeSemesterSelectorProps> = ({
       </div>
 
       {/* Semester */}
-      <Select
-        value={semester || undefined}
-        onValueChange={(v) => onChange(grades, v)}
-        disabled={semesterDisabled}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder={
-            !grades.length ? '请先选择年级' :
-            hasKindergarten ? '幼儿园不可选择学期' :
-            isMultiple ? '多选年级时不可选学期' :
-            '选择学期'
-          } />
-        </SelectTrigger>
-        <SelectContent>
-          {SEMESTERS.map((s) => (
-            <SelectItem key={s} value={s}>{s}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {semesterDisabled ? (
+        <div className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm text-muted-foreground">
+          {!grades.length ? '请先选择年级' :
+           hasKindergarten ? '幼儿园不可选择学期' :
+           '多选年级时不可选学期'}
+        </div>
+      ) : (
+        <Select
+          value={semester || undefined}
+          onValueChange={(v) => onChange(grades, v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="选择学期" />
+          </SelectTrigger>
+          <SelectContent>
+            {SEMESTERS.map((s) => (
+              <SelectItem key={s} value={s}>{s}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
     </div>
   );
 };
