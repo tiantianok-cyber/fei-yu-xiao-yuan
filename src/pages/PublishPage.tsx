@@ -272,8 +272,7 @@ const PublishPage: React.FC = () => {
           <GradeSemesterSelector
             grade={grade}
             semester={semester}
-            onGradeChange={setGrade}
-            onSemesterChange={setSemester}
+            onChange={(g, s) => { setGrade(g); setSemester(s); }}
           />
         </div>
 
