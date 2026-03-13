@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -45,72 +45,78 @@ interface UserRole {
   role: 'admin' | 'moderator' | 'user';
 }
 
-interface UserScore {
-  user_id: string;
-  avg_score: number;
-  review_count: number;
-}
+type AdminRole = 'admin' | 'moderator' | 'user';
+
+const SUPER_ADMIN_PHONE = '15810505520';
 
 const AdminUsers: React.FC = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
-  const [userScores, setUserScores] = useState<Record<string, UserScore>>({});
-  const [currentUserRole, setCurrentUserRole] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [roles, setRoles] = useState<UserRole[]>([]);
+  const [currentRole, setCurrentRole] = useState<AdminRole>('user');
   const [resetDialog, setResetDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
   const [newPassword, setNewPassword] = useState('');
   const [logsDialog, setLogsDialog] = useState<{ open: boolean; user: UserProfile | null; logs: LoginLog[] }>({ open: false, user: null, logs: [] });
   const [disableConfirm, setDisableConfirm] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
   const [actionLoading, setActionLoading] = useState(false);
+  const [scores, setScores] = useState<Record<string, { avg: number; count: number }>>({});
 
   useEffect(() => { loadUsers(); }, []);
 
   const loadUsers = async () => {
     setLoading(true);
-    const [{ data: profileData }, { data: rolesData }, { data: reviewData }] = await Promise.all([
+    const [{ data: profilesData }, { data: rolesData }, { data: reviewsData }] = await Promise.all([
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
       supabase.from('user_roles').select('user_id, role'),
       supabase.from('reviews').select('reviewee_id, cooperation_score'),
     ]);
 
-    setUsers((profileData as UserProfile[]) || []);
-    setUserRoles((rolesData as UserRole[]) || []);
+    const roleRows = (rolesData as UserRole[]) || [];
+    setUsers((profilesData as UserProfile[]) || []);
+    setRoles(roleRows);
 
-    // Compute current user's role
     if (user) {
-      const myRole = (rolesData as UserRole[])?.find(r => r.user_id === user.id);
-      setCurrentUserRole(myRole?.role || 'user');
+      const myRoles = roleRows.filter((r) => r.user_id === user.id).map((r) => r.role);
+      const role: AdminRole = myRoles.includes('admin')
+        ? 'admin'
+        : myRoles.includes('moderator')
+          ? 'moderator'
+          : 'user';
+      setCurrentRole(role);
     }
 
-    // Compute average scores per user
     const scoreMap: Record<string, { total: number; count: number }> = {};
-    (reviewData || []).forEach((r: any) => {
+    (reviewsData || []).forEach((r: any) => {
       if (!scoreMap[r.reviewee_id]) scoreMap[r.reviewee_id] = { total: 0, count: 0 };
-      scoreMap[r.reviewee_id].total += r.cooperation_score;
+      scoreMap[r.reviewee_id].total += Number(r.cooperation_score || 0);
       scoreMap[r.reviewee_id].count += 1;
     });
-    const scores: Record<string, UserScore> = {};
-    Object.entries(scoreMap).forEach(([uid, s]) => {
-      scores[uid] = { user_id: uid, avg_score: Math.round((s.total / s.count) * 10) / 10, review_count: s.count };
+
+    const calculated: Record<string, { avg: number; count: number }> = {};
+    Object.entries(scoreMap).forEach(([uid, v]) => {
+      calculated[uid] = {
+        avg: Number((v.total / v.count).toFixed(1)),
+        count: v.count,
+      };
     });
-    setUserScores(scores);
+    setScores(calculated);
 
     setLoading(false);
   };
 
-  const getUserRole = (userId: string): string | null => {
-    const role = userRoles.find(r => r.user_id === userId && (r.role === 'admin' || r.role === 'moderator'));
-    return role?.role || null;
+  const getRoleOfUser = (u: UserProfile): AdminRole => {
+    if (u.phone === SUPER_ADMIN_PHONE) return 'admin';
+    const roleRows = roles.filter((r) => r.user_id === u.user_id).map((r) => r.role);
+    if (roleRows.includes('admin')) return 'admin';
+    if (roleRows.includes('moderator')) return 'moderator';
+    return 'user';
   };
 
-  const canDisableUser = (targetUserId: string): boolean => {
-    const targetRole = getUserRole(targetUserId);
-    if (currentUserRole === 'admin') return true; // super admin can disable anyone
-    if (currentUserRole === 'moderator') {
-      // moderator cannot disable admin
-      return targetRole !== 'admin';
-    }
+  const canManageUserStatus = (u: UserProfile) => {
+    const targetRole = getRoleOfUser(u);
+    if (currentRole === 'admin') return true;
+    if (currentRole === 'moderator') return targetRole !== 'admin';
     return false;
   };
 
@@ -134,54 +140,44 @@ const AdminUsers: React.FC = () => {
     setActionLoading(false);
   };
 
-  const handleViewLogs = async (u: UserProfile) => {
+  const handleViewLogs = async (targetUser: UserProfile) => {
     const { data } = await supabase
       .from('login_logs')
       .select('*')
-      .eq('user_id', u.user_id)
+      .eq('user_id', targetUser.user_id)
       .order('login_time', { ascending: false })
       .limit(50);
-    setLogsDialog({ open: true, user: u, logs: (data as LoginLog[]) || [] });
+    setLogsDialog({ open: true, user: targetUser, logs: (data as LoginLog[]) || [] });
   };
 
-  const handleToggleStatus = async (u: UserProfile) => {
-    if (u.status === 'enabled') {
-      // Show confirmation before disabling
-      setDisableConfirm({ open: true, user: u });
-      return;
-    }
-    // Enable directly
-    await executeToggle(u);
-  };
-
-  const executeToggle = async (u: UserProfile) => {
-    const action = u.status === 'enabled' ? 'disable_user' : 'enable_user';
+  const executeToggleStatus = async (targetUser: UserProfile) => {
+    const action = targetUser.status === 'enabled' ? 'disable_user' : 'enable_user';
     setActionLoading(true);
     try {
       const res = await supabase.functions.invoke('admin-actions', {
-        body: { action, userId: u.user_id },
+        body: { action, userId: targetUser.user_id },
       });
       if (res.error) throw new Error(res.error.message);
-      toast.success(action === 'disable_user' ? '已禁用该用户' : '已启用该用户');
-      loadUsers();
+      toast.success(action === 'disable_user' ? '已禁用' : '已启用');
+      await loadUsers();
     } catch (err: any) {
       toast.error(err.message || '操作失败');
     }
     setActionLoading(false);
   };
 
-  const confirmDisable = async () => {
-    if (disableConfirm.user) {
-      await executeToggle(disableConfirm.user);
+  const handleToggleStatus = async (targetUser: UserProfile) => {
+    if (!canManageUserStatus(targetUser)) {
+      toast.error('当前账号无权限操作该用户');
+      return;
     }
-    setDisableConfirm({ open: false, user: null });
-  };
 
-  const getRoleBadge = (userId: string) => {
-    const role = getUserRole(userId);
-    if (role === 'admin') return <Badge variant="default" className="text-xs bg-red-500 hover:bg-red-600">超管</Badge>;
-    if (role === 'moderator') return <Badge variant="default" className="text-xs bg-orange-500 hover:bg-orange-600">管理</Badge>;
-    return null;
+    if (targetUser.status === 'enabled') {
+      setDisableConfirm({ open: true, user: targetUser });
+      return;
+    }
+
+    await executeToggleStatus(targetUser);
   };
 
   if (loading) return <div className="text-center py-12 text-muted-foreground">加载用户数据...</div>;
@@ -197,22 +193,25 @@ const AdminUsers: React.FC = () => {
               <TableHead className="hidden md:table-cell">城市</TableHead>
               <TableHead className="hidden lg:table-cell">学校</TableHead>
               <TableHead className="hidden md:table-cell">年级</TableHead>
-              <TableHead>综合得分</TableHead>
+              <TableHead className="hidden md:table-cell">综合得分</TableHead>
               <TableHead>状态</TableHead>
               <TableHead className="hidden sm:table-cell">注册时间</TableHead>
               <TableHead>操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map(u => {
-              const score = userScores[u.user_id];
-              const disableAllowed = canDisableUser(u.user_id);
+            {users.map((u) => {
+              const role = getRoleOfUser(u);
+              const userScore = scores[u.user_id];
+              const canManage = canManageUserStatus(u);
+
               return (
                 <TableRow key={u.id}>
                   <TableCell className="font-medium">
-                    <div className="flex items-center gap-1.5">
-                      {u.nickname}
-                      {getRoleBadge(u.user_id)}
+                    <div className="flex items-center gap-2">
+                      <span>{u.nickname}</span>
+                      {role === 'admin' && <Badge variant="destructive" className="text-xs">超管</Badge>}
+                      {role === 'moderator' && <Badge variant="secondary" className="text-xs">管理</Badge>}
                     </div>
                   </TableCell>
                   <TableCell className="text-xs">{u.phone}</TableCell>
@@ -221,12 +220,10 @@ const AdminUsers: React.FC = () => {
                   </TableCell>
                   <TableCell className="hidden lg:table-cell text-xs">{u.school || '-'}</TableCell>
                   <TableCell className="hidden md:table-cell text-xs">
-                    {u.child_grade ? `${u.child_grade}${u.child_semester ? ' ' + u.child_semester : ''}` : '-'}
+                    {u.child_grade ? `${u.child_grade}${u.child_semester ? ` ${u.child_semester}` : ''}` : '-'}
                   </TableCell>
-                  <TableCell className="text-xs">
-                    {score ? (
-                      <span className="font-medium">{score.avg_score}<span className="text-muted-foreground">（{score.review_count}条）</span></span>
-                    ) : <span className="text-muted-foreground">暂无</span>}
+                  <TableCell className="hidden md:table-cell text-xs">
+                    {userScore ? `${userScore.avg}（${userScore.count}条）` : '-'}
                   </TableCell>
                   <TableCell>
                     <Badge variant={u.status === 'enabled' ? 'default' : 'destructive'} className="text-xs">
@@ -238,30 +235,32 @@ const AdminUsers: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => { setResetDialog({ open: true, user: u }); setNewPassword(''); }}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2"
+                        onClick={() => { setResetDialog({ open: true, user: u }); setNewPassword(''); }}
+                        disabled={actionLoading}
+                      >
                         <KeyRound className="h-3.5 w-3.5" />
                       </Button>
                       <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => handleViewLogs(u)}>
                         <FileText className="h-3.5 w-3.5" />
                       </Button>
-                      {u.status === 'enabled' ? (
-                        <Button
-                          variant="ghost" size="sm" className="h-7 px-2"
-                          onClick={() => handleToggleStatus(u)}
-                          disabled={actionLoading || !disableAllowed}
-                          title={!disableAllowed ? '无权限禁用该用户' : '禁用用户'}
-                        >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2"
+                        onClick={() => handleToggleStatus(u)}
+                        disabled={actionLoading || !canManage}
+                        title={canManage ? (u.status === 'enabled' ? '禁用用户' : '启用用户') : '当前账号无权限操作该用户'}
+                      >
+                        {u.status === 'enabled' ? (
                           <Ban className="h-3.5 w-3.5 text-destructive" />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost" size="sm" className="h-7 px-2"
-                          onClick={() => handleToggleStatus(u)}
-                          disabled={actionLoading}
-                        >
-                          <CheckCircle className="h-3.5 w-3.5 text-green-600" />
-                        </Button>
-                      )}
+                        ) : (
+                          <CheckCircle className="h-3.5 w-3.5 text-primary" />
+                        )}
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -271,26 +270,34 @@ const AdminUsers: React.FC = () => {
         </Table>
       </div>
 
-      {/* Disable Confirmation */}
-      <AlertDialog open={disableConfirm.open} onOpenChange={(v) => !v && setDisableConfirm({ open: false, user: null })}>
+      <AlertDialog
+        open={disableConfirm.open}
+        onOpenChange={(open) => setDisableConfirm({ open, user: open ? disableConfirm.user : null })}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>确认禁用用户</AlertDialogTitle>
+            <AlertDialogTitle>确认禁用该用户？</AlertDialogTitle>
             <AlertDialogDescription>
-              您即将禁用用户 <strong>{disableConfirm.user?.nickname}</strong>（手机号：{disableConfirm.user?.phone}）。
-              禁用后该用户将无法登录系统，是否确认？
+              禁用后该账号将无法登录。用户：{disableConfirm.user?.nickname}（{disableConfirm.user?.phone}）
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDisable} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (disableConfirm.user) {
+                  await executeToggleStatus(disableConfirm.user);
+                }
+                setDisableConfirm({ open: false, user: null });
+              }}
+            >
               确认禁用
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Reset Password Dialog */}
       <Dialog open={resetDialog.open} onOpenChange={(v) => setResetDialog({ open: v, user: v ? resetDialog.user : null })}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
@@ -301,7 +308,7 @@ const AdminUsers: React.FC = () => {
             <Input
               placeholder="输入新密码（至少8位）"
               value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
+              onChange={(e) => setNewPassword(e.target.value)}
             />
             <Button className="w-full" onClick={handleResetPassword} disabled={actionLoading}>
               {actionLoading ? '处理中...' : '确认重置'}
@@ -310,8 +317,10 @@ const AdminUsers: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Login Logs Dialog */}
-      <Dialog open={logsDialog.open} onOpenChange={(v) => setLogsDialog({ open: v, user: v ? logsDialog.user : null, logs: v ? logsDialog.logs : [] })}>
+      <Dialog
+        open={logsDialog.open}
+        onOpenChange={(v) => setLogsDialog({ open: v, user: v ? logsDialog.user : null, logs: v ? logsDialog.logs : [] })}
+      >
         <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>登录日志 - {logsDialog.user?.nickname}</DialogTitle>
@@ -328,7 +337,7 @@ const AdminUsers: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {logsDialog.logs.map(log => (
+                {logsDialog.logs.map((log) => (
                   <TableRow key={log.id}>
                     <TableCell className="text-xs">{new Date(log.login_time).toLocaleString('zh-CN')}</TableCell>
                     <TableCell className="text-xs max-w-[200px] truncate">{log.device || '-'}</TableCell>
