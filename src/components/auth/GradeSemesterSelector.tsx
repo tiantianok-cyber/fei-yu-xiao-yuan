@@ -70,7 +70,6 @@ export const GradeSemesterSelector: React.FC<GradeSemesterSelectorProps> = ({
 
       {/* Semester */}
       <Select
-        key={semesterDisabled ? 'disabled' : 'enabled'}
         value={semester || undefined}
         onValueChange={(v) => onChange(grades, v)}
         disabled={semesterDisabled}
