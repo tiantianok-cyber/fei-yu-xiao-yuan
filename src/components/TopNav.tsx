@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Plus, ShoppingCart, ClipboardList, User, ChevronDown } from 'lucide-react';
+import { Plus, ShoppingCart, ClipboardList, User, ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import logo from '@/assets/logo.png';
@@ -14,7 +14,7 @@ const navItems = [
 export const TopNav: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const [showMyMenu, setShowMyMenu] = useState(false);
 
   const handleNavClick = (path: string) => {
@@ -96,11 +96,19 @@ export const TopNav: React.FC = () => {
                   >
                     我的店铺
                   </button>
-                  <button
+                   <button
                     className="w-full px-4 py-2.5 text-sm text-left hover:bg-muted transition-colors"
                     onClick={() => { setShowMyMenu(false); navigate('/profile'); }}
                   >
                     个人中心
+                  </button>
+                  <div className="my-1 border-t border-border" />
+                  <button
+                    className="w-full px-4 py-2.5 text-sm text-left text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-2"
+                    onClick={async () => { setShowMyMenu(false); await signOut(); navigate('/'); }}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    退出登录
                   </button>
                 </div>
               </>

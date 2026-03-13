@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Plus, ShoppingCart, ClipboardList, User, ChevronDown } from 'lucide-react';
+import { Plus, ShoppingCart, ClipboardList, User, ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
@@ -13,7 +13,7 @@ const navItems = [
 export const BottomNav: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [showMyMenu, setShowMyMenu] = useState(false);
 
   const handleNavClick = (path: string) => {
@@ -49,6 +49,14 @@ export const BottomNav: React.FC = () => {
               onClick={() => { setShowMyMenu(false); handleNavClick('/profile'); }}
             >
               个人中心
+            </button>
+            <div className="my-1 border-t border-border" />
+            <button
+              className="w-full px-4 py-2.5 text-sm text-left text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-2"
+              onClick={async () => { setShowMyMenu(false); await signOut(); navigate('/'); }}
+            >
+              <LogOut className="h-4 w-4" />
+              退出登录
             </button>
           </div>
         </div>
