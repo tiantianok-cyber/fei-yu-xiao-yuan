@@ -76,7 +76,7 @@ export const GradeSemesterSelector: React.FC<GradeSemesterSelectorProps> = ({
         <SelectTrigger>
           <SelectValue placeholder={
             !grades.length ? '请先选择年级' :
-            hasKindergarten && grades.length === 1 ? '幼儿园不可选择学期' :
+            hasKindergarten ? '幼儿园不可选择学期' :
             isMultiple ? '多选年级时不可选学期' :
             '选择学期'
           } />
