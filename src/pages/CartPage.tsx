@@ -4,6 +4,7 @@ import { Trash2, ShoppingCart, AlertTriangle, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
@@ -302,13 +303,18 @@ const CartPage: React.FC = () => {
                           onCheckedChange={() => toggleSelect(item.cart_id)}
                         />
                         <div
-                          className="w-14 h-[78px] bg-muted rounded-lg overflow-hidden shrink-0 cursor-pointer"
+                          className="w-14 h-[78px] bg-muted rounded-lg overflow-hidden shrink-0 cursor-pointer relative"
                           onClick={() => navigate(`/product/${item.product_id}`)}
                         >
                           {item.cover_image_url ? (
                             <img src={item.cover_image_url} alt={item.name} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-lg">📖</div>
+                          )}
+                          {item.status === 'in_trade' && (
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                              <span className="text-[10px] font-semibold text-white">交易中</span>
+                            </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -320,8 +326,11 @@ const CartPage: React.FC = () => {
                             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>
                           )}
                           <p className="text-primary font-bold text-sm mt-1">¥{item.price}</p>
-                          {item.status !== 'on_sale' && (
-                            <span className="text-xs text-destructive">已下架或交易中</span>
+                          {item.status === 'in_trade' && (
+                            <Badge className="bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0">交易中</Badge>
+                          )}
+                          {item.status !== 'on_sale' && item.status !== 'in_trade' && (
+                            <span className="text-xs text-destructive">已下架</span>
                           )}
                         </div>
                         <button
