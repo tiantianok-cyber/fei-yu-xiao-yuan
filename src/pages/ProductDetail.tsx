@@ -62,6 +62,7 @@ const ProductDetail: React.FC = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [seller, setSeller] = useState<SellerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showImage, setShowImage] = useState(false);
 
   useEffect(() => {
     if (!id) return;
