@@ -337,6 +337,7 @@ const Index: React.FC = () => {
     setFilterProvince('');
     setFilterCity('');
     setFilterDistrict('');
+    sessionStorage.removeItem(FILTER_STORAGE_KEY);
   };
 
   const addToCart = async (productId: string, e: React.MouseEvent) => {
