@@ -463,7 +463,7 @@ const Index: React.FC = () => {
                   onClick={() => navigate(`/product/${product.id}`)}
                 >
                   {/* Cover */}
-                  <div className="w-24 h-32 bg-muted relative overflow-hidden shrink-0">
+                  <div className="w-24 bg-muted relative overflow-hidden shrink-0 self-stretch">
                     {product.cover_image_url ? (
                       <img
                         src={product.cover_image_url}
