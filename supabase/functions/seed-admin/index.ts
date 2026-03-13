@@ -17,17 +17,24 @@ Deno.serve(async (req) => {
   for (const admin of admins) {
     const email = `${admin.phone}@flyfly.local`;
 
-    // Check if user already exists
+    // Check if user already exists (check both old and new email domains)
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
+    const oldEmail = `${admin.phone}@phone.local`;
     const existing = existingUsers?.users?.find(
-      (u) => u.email === email
+      (u) => u.email === email || u.email === oldEmail
     );
 
     let userId: string;
 
     if (existing) {
       userId = existing.id;
-      results.push(`User ${admin.phone} already exists (${userId})`);
+      // Update email to new domain if needed
+      if (existing.email !== email) {
+        await supabase.auth.admin.updateUserById(userId, { email, password: admin.password });
+        results.push(`Updated user ${admin.phone} email to ${email}`);
+      } else {
+        results.push(`User ${admin.phone} already exists (${userId})`);
+      }
     } else {
       const { data: newUser, error } = await supabase.auth.admin.createUser({
         email,
