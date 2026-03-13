@@ -76,7 +76,7 @@ export const TopNav: React.FC = () => {
               )}
             >
               <User className="h-4 w-4" />
-              <span>{user ? (profile?.nickname || '我的') : '登录'}</span>
+              <span>{user ? (profile?.nickname || '我的') : '登录/注册'}</span>
               {user && <ChevronDown className="h-3 w-3" />}
             </button>
 
