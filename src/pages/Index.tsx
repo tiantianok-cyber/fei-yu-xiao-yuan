@@ -433,9 +433,9 @@ const Index: React.FC = () => {
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-card rounded-xl border border-border animate-pulse">
-                <div className="aspect-[1/1.42] bg-muted rounded-t-xl" />
-                <div className="p-3 space-y-2">
+              <div key={i} className="bg-card rounded-xl border border-border animate-pulse flex">
+                <div className="w-24 h-32 bg-muted rounded-l-xl shrink-0" />
+                <div className="p-2.5 space-y-2 flex-1">
                   <div className="h-4 bg-muted rounded w-3/4" />
                   <div className="h-3 bg-muted rounded w-1/2" />
                   <div className="h-4 bg-muted rounded w-1/3" />
