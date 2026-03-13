@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, Copy, Phone, Store, ChevronRight, X } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Copy, Phone, Store, ChevronRight, X, Share2 } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -237,6 +237,17 @@ const ProductDetail: React.FC = () => {
                   <Copy className="h-4 w-4 mr-1" />我也要卖此书
                 </Button>
               )}
+              <Button variant="outline" className="w-full" onClick={() => {
+                const url = `${window.location.origin}/product/${product.id}`;
+                const text = `${product.name} 孩子的闲置好物，价格实惠，有需要的邻居戳链接挑选 ${url}`;
+                navigator.clipboard.writeText(text).then(() => {
+                  toast({ title: '分享内容已复制到剪贴板 📋' });
+                }).catch(() => {
+                  toast({ title: '复制失败，请手动复制', variant: 'destructive' });
+                });
+              }}>
+                <Share2 className="h-4 w-4 mr-1" />分享
+              </Button>
             </div>
           </div>
 
