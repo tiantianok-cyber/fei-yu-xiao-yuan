@@ -28,13 +28,9 @@ Deno.serve(async (req) => {
 
     if (existing) {
       userId = existing.id;
-      // Update email to new domain if needed
-      if (existing.email !== email) {
-        await supabase.auth.admin.updateUserById(userId, { email, password: admin.password });
-        results.push(`Updated user ${admin.phone} email to ${email}`);
-      } else {
-        results.push(`User ${admin.phone} already exists (${userId})`);
-      }
+      // Always reset password and ensure correct email
+      await supabase.auth.admin.updateUserById(userId, { email, password: admin.password, email_confirm: true });
+      results.push(`Updated user ${admin.phone} (${userId})`);
     } else {
       const { data: newUser, error } = await supabase.auth.admin.createUser({
         email,
