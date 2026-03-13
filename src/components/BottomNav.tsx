@@ -13,7 +13,7 @@ const navItems = [
 export const BottomNav: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [showMyMenu, setShowMyMenu] = useState(false);
 
   const handleNavClick = (path: string) => {
