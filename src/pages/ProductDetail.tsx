@@ -100,12 +100,18 @@ const ProductDetail: React.FC = () => {
     load();
   }, [id]);
 
+  const isSelfProduct = user && product?.seller_id === user.id;
+
   const addToCart = async () => {
     if (!user) {
       navigate('/auth', { state: { from: `/product/${id}` } });
       return;
     }
     if (!product) return;
+    if (isSelfProduct) {
+      toast({ title: '不能购买自己发布的物品' });
+      return;
+    }
     const { error } = await supabase.from('cart_items').insert({
       user_id: user.id,
       product_id: product.id,
