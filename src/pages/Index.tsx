@@ -172,6 +172,7 @@ const Index: React.FC = () => {
   const [schoolOptions, setSchoolOptions] = useState<string[]>([]);
   const [communityOptions, setCommunityOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cityUserIds, setCityUserIds] = useState<string[] | null>(null);
 
   // Initialize from profile
   useEffect(() => {
@@ -182,39 +183,62 @@ const Index: React.FC = () => {
     }
   }, [profile]);
 
-  // Load filter options
+  // Load users in selected city/district → derive cityUserIds
   useEffect(() => {
-    const loadFilterOptions = async () => {
-      const { data: prods } = await supabase
-        .from('products')
-        .select('school')
-        .in('status', ['on_sale', 'in_trade']);
-      if (prods) {
-        const uniqueSchools = [...new Set(prods.map(p => p.school).filter(Boolean))] as string[];
-        setSchoolOptions(uniqueSchools);
+    const loadCityUsers = async () => {
+      if (!filterProvince) {
+        setCityUserIds(null);
+        return;
       }
-      const { data: profs } = await supabase
+      let query = supabase
         .from('profiles')
-        .select('community')
-        .not('community', 'is', null)
-        .not('community', 'eq', '');
-      if (profs) {
-        const uniqueComms = [...new Set(profs.map(p => p.community).filter(Boolean))] as string[];
+        .select('user_id, community, school')
+        .eq('province', filterProvince);
+      if (filterCity) query = query.eq('city', filterCity);
+      if (filterDistrict) query = query.eq('district', filterDistrict);
+
+      const { data } = await query;
+      if (data) {
+        setCityUserIds(data.map(p => p.user_id));
+        const uniqueComms = [...new Set(data.map(p => p.community).filter(Boolean))] as string[];
         setCommunityOptions(uniqueComms);
+        const uniqueSchools = [...new Set(data.map(p => p.school).filter(Boolean))] as string[];
+        setSchoolOptions(uniqueSchools);
+      } else {
+        setCityUserIds([]);
+        setCommunityOptions([]);
+        setSchoolOptions([]);
       }
     };
-    loadFilterOptions();
-  }, []);
+    loadCityUsers();
+  }, [filterProvince, filterCity, filterDistrict]);
 
-  // Load products
+  // Load products filtered by city users
   useEffect(() => {
     const loadProducts = async () => {
+      // Wait for cityUserIds to resolve if a city is selected
+      if (filterProvince && cityUserIds === null) return;
+
       setLoading(true);
+
+      // If city is selected but no users in that city, show empty
+      if (cityUserIds !== null && cityUserIds.length === 0) {
+        setProducts([]);
+        setSellers({});
+        setLoading(false);
+        return;
+      }
+
       let query = supabase
         .from('products')
         .select('*')
         .in('status', ['on_sale', 'in_trade'])
         .order('created_at', { ascending: false });
+
+      // Filter by city users
+      if (cityUserIds !== null && cityUserIds.length > 0) {
+        query = query.in('seller_id', cityUserIds);
+      }
 
       if (filterType !== 'all') query = query.eq('type', filterType as 'book' | 'other');
       if (filterType !== 'other' && filterCondition !== 'all') query = query.eq('condition', filterCondition as any);
@@ -236,6 +260,17 @@ const Index: React.FC = () => {
             (p.description && p.description.toLowerCase().includes(s))
           );
         }
+        // Also filter by selected communities (via seller profile)
+        if (filterCommunities.length > 0) {
+          const { data: commProfiles } = await supabase
+            .from('profiles')
+            .select('user_id')
+            .in('community', filterCommunities);
+          if (commProfiles) {
+            const commUserIds = new Set(commProfiles.map(p => p.user_id));
+            filtered = filtered.filter(p => commUserIds.has(p.seller_id));
+          }
+        }
         setProducts(filtered);
 
         // Load seller profiles
@@ -250,12 +285,14 @@ const Index: React.FC = () => {
             sellerData.forEach(s => { map[s.user_id] = s as SellerProfile; });
             setSellers(map);
           }
+        } else {
+          setSellers({});
         }
       }
       setLoading(false);
     };
     loadProducts();
-  }, [filterType, filterGrade, filterSemester, filterCondition, filterSchools, activeSearch]);
+  }, [filterType, filterGrade, filterSemester, filterCondition, filterSchools, filterCommunities, activeSearch, cityUserIds]);
 
   const handleSearch = () => {
     setActiveSearch(searchText.trim());
@@ -275,6 +312,9 @@ const Index: React.FC = () => {
     setFilterCommunities([]);
     setSearchText('');
     setActiveSearch('');
+    setFilterProvince('');
+    setFilterCity('');
+    setFilterDistrict('');
   };
 
   const addToCart = async (productId: string, e: React.MouseEvent) => {
