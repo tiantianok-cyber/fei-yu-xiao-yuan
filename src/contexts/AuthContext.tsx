@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -44,7 +44,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const statusCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const realtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  const forceSignOut = async (message: string) => {
+    await supabase.auth.signOut();
+    setProfile(null);
+    setSession(null);
+    setUser(null);
+    toast.error(message);
+  };
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -54,11 +62,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .single();
     if (data) {
       setProfile(data as Profile);
-      // If the profile is disabled, force sign out
       if ((data as Profile).status === 'disabled') {
-        await supabase.auth.signOut();
-        setProfile(null);
-        toast.error('账号已被禁用，如有疑问请联系客服');
+        await forceSignOut('账号已被禁用，如有疑问请联系客服');
       }
     }
   };
@@ -67,32 +72,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user) await fetchProfile(user.id);
   };
 
-  // Periodic check: verify user is still enabled
-  const startStatusCheck = useCallback((userId: string) => {
-    if (statusCheckRef.current) clearInterval(statusCheckRef.current);
-    statusCheckRef.current = setInterval(async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('status')
-        .eq('user_id', userId)
-        .single();
-      if (data?.status === 'disabled') {
-        await supabase.auth.signOut();
-        setProfile(null);
-        setSession(null);
-        setUser(null);
-        toast.error('账号已被禁用，已自动退出登录');
-        if (statusCheckRef.current) clearInterval(statusCheckRef.current);
-      }
-    }, 30000); // Check every 30 seconds
-  }, []);
+  // Subscribe to realtime changes on the current user's profile row
+  const startRealtimeWatch = (userId: string) => {
+    stopRealtimeWatch();
+    const channel = supabase
+      .channel(`profile-status-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const newData = payload.new as Profile;
+          if (newData.status === 'disabled') {
+            forceSignOut('账号已被禁用，已自动退出登录');
+          } else {
+            setProfile(newData);
+          }
+        }
+      )
+      .subscribe();
+    realtimeChannelRef.current = channel;
+  };
 
-  const stopStatusCheck = useCallback(() => {
-    if (statusCheckRef.current) {
-      clearInterval(statusCheckRef.current);
-      statusCheckRef.current = null;
+  const stopRealtimeWatch = () => {
+    if (realtimeChannelRef.current) {
+      supabase.removeChannel(realtimeChannelRef.current);
+      realtimeChannelRef.current = null;
     }
-  }, []);
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -101,10 +112,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         if (session?.user) {
           setTimeout(() => fetchProfile(session.user.id), 0);
-          startStatusCheck(session.user.id);
+          startRealtimeWatch(session.user.id);
         } else {
           setProfile(null);
-          stopStatusCheck();
+          stopRealtimeWatch();
         }
         setLoading(false);
       }
@@ -115,19 +126,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
-        startStatusCheck(session.user.id);
+        startRealtimeWatch(session.user.id);
       }
       setLoading(false);
     });
 
     return () => {
       subscription.unsubscribe();
-      stopStatusCheck();
+      stopRealtimeWatch();
     };
   }, []);
 
   const signOut = async () => {
-    stopStatusCheck();
+    stopRealtimeWatch();
     await supabase.auth.signOut();
     setProfile(null);
   };
