@@ -14,6 +14,8 @@ interface SellerProfile {
   community: string | null;
   school: string | null;
   avatar_url: string | null;
+  city: string | null;
+  district: string | null;
 }
 
 interface Product {
