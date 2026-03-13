@@ -339,10 +339,11 @@ const Index: React.FC = () => {
   };
 
   const cityLabel = useMemo(() => {
-    if (filterCity && filterDistrict) return `${filterCity}·${filterDistrict}`;
+    if (filterDistrict) return filterDistrict;
     if (filterCity) return filterCity;
+    if (filterProvince) return filterProvince;
     return '选择城市';
-  }, [filterCity, filterDistrict]);
+  }, [filterProvince, filterCity, filterDistrict]);
 
   const isBookType = filterType !== 'other';
 
