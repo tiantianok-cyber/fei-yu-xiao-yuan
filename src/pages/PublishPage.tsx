@@ -34,7 +34,7 @@ const PublishPage: React.FC = () => {
   const [translator, setTranslator] = useState('');
   const [publisher, setPublisher] = useState('');
   const [publishDate, setPublishDate] = useState('');
-  const [grade, setGrade] = useState('');
+  const [grades, setGrades] = useState<string[]>([]);
   const [semester, setSemester] = useState('');
   const [bookTag, setBookTag] = useState('');
   const [condition, setCondition] = useState('');
@@ -57,7 +57,7 @@ const PublishPage: React.FC = () => {
         if (data.translator) setTranslator(data.translator);
         if (data.publisher) setPublisher(data.publisher);
         if (data.publish_date) setPublishDate(data.publish_date);
-        if (data.grade?.length) setGrade(data.grade[0]);
+        if (data.grade?.length) setGrades(data.grade);
         if (data.semester) setSemester(data.semester);
         if (data.book_tag) setBookTag(data.book_tag);
       } catch {}
@@ -68,7 +68,7 @@ const PublishPage: React.FC = () => {
   // Default school/grade/semester from profile
   useEffect(() => {
     if (profile?.school && !school) setSchool(profile.school);
-    if (profile?.child_grade && !grade) setGrade(profile.child_grade);
+    if (profile?.child_grade && grades.length === 0) setGrades([profile.child_grade]);
     if (profile?.child_semester && !semester) setSemester(profile.child_semester);
   }, [profile]);
 
@@ -118,7 +118,7 @@ const PublishPage: React.FC = () => {
       translator: type === 'book' ? (translator.trim() || null) : null,
       publisher: type === 'book' ? (publisher.trim() || null) : null,
       publish_date: type === 'book' ? (publishDate.trim() || null) : null,
-      grade: grade ? [grade] : null,
+      grade: grades.length > 0 ? grades : null,
       semester: semester || null,
       book_tag: type === 'book' ? (bookTag || null) : null,
       condition: (type === 'book' ? condition : (condition || 'used')) as any,
@@ -141,91 +141,10 @@ const PublishPage: React.FC = () => {
     navigate('/my-products');
   };
 
-  const BookNotice = () => (
-    <div className="space-y-2 mb-4">
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-        <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-        <span>请确保上架书籍为正版，盗版/影印版书籍严禁上架。经发现将被下架处理；多次违规或情节严重者，将予以封号。</span>
-      </div>
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
-        <Lightbulb className="h-4 w-4 mt-0.5 shrink-0" />
-        <span>信息越丰富，越容易被他人查找到</span>
-      </div>
-    </div>
-  );
-
-  const OtherNotice = () => (
-    <div className="space-y-2 mb-4">
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-        <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-        <span>请确保物品为正品，并如实描述详细情况。</span>
-      </div>
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
-        <Lightbulb className="h-4 w-4 mt-0.5 shrink-0" />
-        <span>信息越丰富，越容易被他人查找到</span>
-      </div>
-    </div>
-  );
-
-  // Shared fields: cover, school, grade/semester, price, description
-  const SharedFields = () => (
-    <>
-      {/* Cover image */}
-      <div className="space-y-2">
-        <Label>封面图片</Label>
-        <div className="flex items-start gap-3">
-          {coverPreview ? (
-            <div className="relative w-24 h-[136px] rounded-lg overflow-hidden border border-border">
-              <img src={coverPreview} alt="封面" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={() => { setCoverFile(null); setCoverPreview(null); }}
-                className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-24 h-[136px] rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-            >
-              <Camera className="h-6 w-6 mb-1" />
-              <span className="text-xs">添加图片</span>
-            </button>
-          )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleImageSelect}
-          />
-        </div>
-      </div>
-    </>
-  );
-
-  const SchoolAndGradeFields = () => (
-    <>
-      {/* School */}
-      <div className="space-y-2">
-        <Label>适用学校</Label>
-        <Input value={school} onChange={(e) => setSchool(e.target.value)} placeholder="适用的学校名称（选填）" />
-      </div>
-
-      {/* Grade & Semester */}
-      <div className="space-y-2">
-        <Label>适用年级与学期</Label>
-        <GradeSemesterSelector
-          grade={grade}
-          semester={semester}
-          onChange={(g, s) => { setGrade(g); setSemester(s); }}
-        />
-      </div>
-    </>
-  );
+  const handleGradeChange = (newGrades: string[], newSemester: string) => {
+    setGrades(newGrades);
+    setSemester(newSemester);
+  };
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-6">
@@ -239,8 +158,51 @@ const PublishPage: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <TabsContent value="book" className="mt-0 space-y-5">
-            <BookNotice />
-            <SharedFields />
+            <div className="space-y-2 mb-4">
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>请确保上架书籍为正版，盗版/影印版书籍严禁上架。经发现将被下架处理；多次违规或情节严重者，将予以封号。</span>
+              </div>
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
+                <Lightbulb className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>信息越丰富，越容易被他人查找到</span>
+              </div>
+            </div>
+
+            {/* Cover image */}
+            <div className="space-y-2">
+              <Label>封面图片</Label>
+              <div className="flex items-start gap-3">
+                {coverPreview ? (
+                  <div className="relative w-24 h-[136px] rounded-lg overflow-hidden border border-border">
+                    <img src={coverPreview} alt="封面" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => { setCoverFile(null); setCoverPreview(null); }}
+                      className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-24 h-[136px] rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                  >
+                    <Camera className="h-6 w-6 mb-1" />
+                    <span className="text-xs">添加图片</span>
+                  </button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageSelect}
+                />
+              </div>
+            </div>
 
             {/* Book name */}
             <div className="space-y-2">
@@ -272,7 +234,7 @@ const PublishPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Book tag - dropdown, required */}
+            {/* Book tag */}
             <div className="space-y-2">
               <Label>书籍标签 *</Label>
               <Select value={bookTag} onValueChange={setBookTag}>
@@ -309,12 +271,65 @@ const PublishPage: React.FC = () => {
               </div>
             </div>
 
-            <SchoolAndGradeFields />
+            {/* School */}
+            <div className="space-y-2">
+              <Label>适用学校</Label>
+              <Input value={school} onChange={(e) => setSchool(e.target.value)} placeholder="适用的学校名称（选填）" />
+            </div>
+
+            {/* Grade & Semester */}
+            <div className="space-y-2">
+              <Label>适用年级与学期</Label>
+              <GradeSemesterSelector grades={grades} semester={semester} onChange={handleGradeChange} />
+            </div>
           </TabsContent>
 
           <TabsContent value="other" className="mt-0 space-y-5">
-            <OtherNotice />
-            <SharedFields />
+            <div className="space-y-2 mb-4">
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>请确保物品为正品，并如实描述详细情况。</span>
+              </div>
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
+                <Lightbulb className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>信息越丰富，越容易被他人查找到</span>
+              </div>
+            </div>
+
+            {/* Cover image - inline instead of inner component */}
+            <div className="space-y-2">
+              <Label>封面图片</Label>
+              <div className="flex items-start gap-3">
+                {coverPreview ? (
+                  <div className="relative w-24 h-[136px] rounded-lg overflow-hidden border border-border">
+                    <img src={coverPreview} alt="封面" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => { setCoverFile(null); setCoverPreview(null); }}
+                      className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-24 h-[136px] rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                  >
+                    <Camera className="h-6 w-6 mb-1" />
+                    <span className="text-xs">添加图片</span>
+                  </button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageSelect}
+                />
+              </div>
+            </div>
 
             {/* Item name */}
             <div className="space-y-2">
@@ -327,7 +342,17 @@ const PublishPage: React.FC = () => {
               />
             </div>
 
-            <SchoolAndGradeFields />
+            {/* School */}
+            <div className="space-y-2">
+              <Label>适用学校</Label>
+              <Input value={school} onChange={(e) => setSchool(e.target.value)} placeholder="适用的学校名称（选填）" />
+            </div>
+
+            {/* Grade & Semester */}
+            <div className="space-y-2">
+              <Label>适用年级与学期</Label>
+              <GradeSemesterSelector grades={grades} semester={semester} onChange={handleGradeChange} />
+            </div>
           </TabsContent>
 
           {/* Price */}

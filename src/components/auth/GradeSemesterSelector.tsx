@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const GRADES = [
   '幼儿园',
@@ -17,43 +18,63 @@ const GRADES = [
 const SEMESTERS = ['上学期', '下学期'];
 
 interface GradeSemesterSelectorProps {
-  grade: string;
+  grades: string[];
   semester: string;
-  onChange: (grade: string, semester: string) => void;
+  onChange: (grades: string[], semester: string) => void;
 }
 
 export const GradeSemesterSelector: React.FC<GradeSemesterSelectorProps> = ({
-  grade,
+  grades,
   semester,
   onChange,
 }) => {
-  const isKindergarten = grade === '幼儿园';
+  const isMultiple = grades.length > 1;
+  const hasKindergarten = grades.includes('幼儿园');
+  const semesterDisabled = !grades.length || isMultiple || hasKindergarten;
+
+  const toggleGrade = (g: string) => {
+    let newGrades: string[];
+    if (grades.includes(g)) {
+      newGrades = grades.filter(v => v !== g);
+    } else {
+      newGrades = [...grades, g];
+    }
+    // If multiple or kindergarten, clear semester
+    const newSemester = (newGrades.length > 1 || newGrades.includes('幼儿园')) ? '' : semester;
+    onChange(newGrades, newSemester);
+  };
 
   return (
-    <div className="grid grid-cols-2 gap-2">
-      <Select
-        value={grade}
-        onValueChange={(v) => {
-          onChange(v, v === '幼儿园' ? '' : semester);
-        }}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="选择年级" />
-        </SelectTrigger>
-        <SelectContent>
-          {GRADES.map((g) => (
-            <SelectItem key={g} value={g}>{g}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="space-y-3">
+      {/* Grade multi-select */}
+      <div className="flex flex-wrap gap-2">
+        {GRADES.map((g) => (
+          <label
+            key={g}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-sm cursor-pointer transition-colors ${
+              grades.includes(g)
+                ? 'border-primary bg-primary/10 text-foreground'
+                : 'border-border text-muted-foreground hover:border-primary/50'
+            }`}
+          >
+            <Checkbox
+              checked={grades.includes(g)}
+              onCheckedChange={() => toggleGrade(g)}
+              className="h-3.5 w-3.5"
+            />
+            {g}
+          </label>
+        ))}
+      </div>
 
+      {/* Semester */}
       <Select
         value={semester}
-        onValueChange={(v) => onChange(grade, v)}
-        disabled={!grade || isKindergarten}
+        onValueChange={(v) => onChange(grades, v)}
+        disabled={semesterDisabled}
       >
         <SelectTrigger>
-          <SelectValue placeholder={isKindergarten ? '不可选' : '选择学期'} />
+          <SelectValue placeholder={semesterDisabled ? (isMultiple ? '多选年级时不可选学期' : (hasKindergarten ? '不可选' : '选择学期')) : '选择学期'} />
         </SelectTrigger>
         <SelectContent>
           {SEMESTERS.map((s) => (
