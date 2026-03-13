@@ -60,6 +60,7 @@ const PublishPage: React.FC = () => {
         if (data.grade?.length) setGrades(data.grade);
         if (data.semester) setSemester(data.semester);
         if (data.book_tag) setBookTag(data.book_tag);
+        if (data.cover_image_url) setCoverPreview(data.cover_image_url);
       } catch {}
       sessionStorage.removeItem('prefill_product');
     }
