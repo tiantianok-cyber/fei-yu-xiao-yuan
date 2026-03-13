@@ -227,7 +227,7 @@ const ProductDetail: React.FC = () => {
 
             {/* Action buttons */}
             <div className="space-y-2">
-              {product.status === 'on_sale' && (
+              {product.status === 'on_sale' && !isSelfProduct && (
                 <Button className="w-full" onClick={addToCart}>
                   <ShoppingCart className="h-4 w-4 mr-1" />加入购物车
                 </Button>
