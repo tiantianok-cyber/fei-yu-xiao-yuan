@@ -12,6 +12,8 @@ import PublishPage from "./pages/PublishPage";
 import CartPage from "./pages/CartPage";
 import OrdersPage from "./pages/OrdersPage";
 import MyProductsPage from "./pages/MyProductsPage";
+import ProfilePage from "./pages/ProfilePage";
+import StorePage from "./pages/StorePage";
 import NotFound from "./pages/NotFound";
 
 // Placeholder pages - will be built in later batches
@@ -42,8 +44,8 @@ const App = () => (
               <Route path="/cart" element={<CartPage />} />
               <Route path="/orders" element={<OrdersPage />} />
               <Route path="/my-products" element={<MyProductsPage />} />
-              <Route path="/store/:userId" element={<PlaceholderPage title="店铺" />} />
-              <Route path="/profile" element={<PlaceholderPage title="个人中心" />} />
+              <Route path="/store/:userId" element={<StorePage />} />
+              <Route path="/profile" element={<ProfilePage />} />
             </Route>
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/tianadmin" element={<PlaceholderPage title="管理后台" />} />
