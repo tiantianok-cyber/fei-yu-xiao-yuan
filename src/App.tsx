@@ -15,7 +15,7 @@ import MyProductsPage from "./pages/MyProductsPage";
 import ProfilePage from "./pages/ProfilePage";
 import StorePage from "./pages/StorePage";
 import AdminPage from "./pages/AdminPage";
-
+import NotFound from "./pages/NotFound";
 
 
 const queryClient = new QueryClient();
