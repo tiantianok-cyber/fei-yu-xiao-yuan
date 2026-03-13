@@ -16,15 +16,7 @@ import ProfilePage from "./pages/ProfilePage";
 import StorePage from "./pages/StorePage";
 import AdminPage from "./pages/AdminPage";
 
-// Placeholder pages - will be built in later batches
-const PlaceholderPage = ({ title }: { title: string }) => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <div className="text-center">
-      <h2 className="text-xl font-semibold text-foreground mb-2">{title}</h2>
-      <p className="text-muted-foreground">即将上线，敬请期待</p>
-    </div>
-  </div>
-);
+
 
 const queryClient = new QueryClient();
 
