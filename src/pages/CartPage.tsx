@@ -36,6 +36,8 @@ interface SellerInfo {
   phone: string;
   community: string | null;
   school: string | null;
+  city: string | null;
+  district: string | null;
 }
 
 const CartPage: React.FC = () => {
@@ -91,7 +93,7 @@ const CartPage: React.FC = () => {
       const sellerIds = [...new Set(cartProducts.map(p => p.seller_id))];
       const { data: sellerData } = await supabase
         .from('profiles')
-        .select('user_id, nickname, phone, community, school')
+        .select('user_id, nickname, phone, community, school, city, district')
         .in('user_id', sellerIds);
       if (sellerData) {
         const map: Record<string, SellerInfo> = {};
@@ -267,6 +269,9 @@ const CartPage: React.FC = () => {
                     />
                     <span className="text-sm font-medium text-foreground">
                       {seller?.nickname || '卖家'}
+                      {seller && (seller.city || seller.district) && (
+                        <span className="text-muted-foreground font-normal"> | {[seller.city, seller.district].filter(Boolean).join('')}</span>
+                      )}
                     </span>
                     {seller?.community && (
                       <span className="text-xs text-muted-foreground">· {seller.community}</span>
@@ -387,7 +392,12 @@ const CartPage: React.FC = () => {
               return (
                 <div key={sellerId} className="bg-card rounded-lg border border-border overflow-hidden">
                   <div className="px-3 py-2 bg-muted/30 border-b border-border">
-                    <p className="text-sm font-medium">{seller?.nickname || '卖家'}</p>
+                    <p className="text-sm font-medium">
+                      {seller?.nickname || '卖家'}
+                      {seller && (seller.city || seller.district) && (
+                        <span className="text-muted-foreground font-normal"> | {[seller.city, seller.district].filter(Boolean).join('')}</span>
+                      )}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {[seller?.community, seller?.phone].filter(Boolean).join(' · ')}
                     </p>
