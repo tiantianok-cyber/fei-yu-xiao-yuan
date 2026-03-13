@@ -106,6 +106,10 @@ const PublishPage: React.FC = () => {
         if (data.semester) setSemester(data.semester);
         if (data.book_tag) setBookTag(data.book_tag);
         if (data.cover_image_url) setCoverPreview(data.cover_image_url);
+        if (data.condition) setCondition(data.condition);
+        if (data.description) setDescription(data.description);
+        if (data.price) setPrice(String(data.price));
+        if (data.school) setSchool(data.school);
       } catch {}
       sessionStorage.removeItem('prefill_product');
     }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,16 @@ interface MyProduct {
   type: string;
   view_count: number;
   created_at: string;
+  author: string | null;
+  translator: string | null;
+  publisher: string | null;
+  publish_date: string | null;
+  grade: string[] | null;
+  semester: string | null;
+  book_tag: string | null;
+  condition: string;
+  description: string | null;
+  school: string | null;
 }
 
 const MyProductsPage: React.FC = () => {
@@ -46,7 +56,7 @@ const MyProductsPage: React.FC = () => {
     setLoading(true);
     const { data } = await supabase
       .from('products')
-      .select('id, name, price, cover_image_url, status, type, view_count, created_at')
+      .select('id, name, price, cover_image_url, status, type, view_count, created_at, author, translator, publisher, publish_date, grade, semester, book_tag, condition, description, school')
       .eq('seller_id', user.id)
       .order('created_at', { ascending: false });
     setProducts((data || []) as MyProduct[]);
@@ -143,6 +153,33 @@ const MyProductsPage: React.FC = () => {
                           {product.status === 'on_sale' ? '下架' : '上架'}
                         </button>
                       </>
+                    )}
+                    {product.status === 'sold' && (
+                      <button
+                        onClick={() => {
+                          sessionStorage.setItem('prefill_product', JSON.stringify({
+                            type: product.type,
+                            name: product.name,
+                            author: product.author,
+                            translator: product.translator,
+                            publisher: product.publisher,
+                            publish_date: product.publish_date,
+                            grade: product.grade,
+                            semester: product.semester,
+                            book_tag: product.book_tag,
+                            cover_image_url: product.cover_image_url,
+                            condition: product.condition,
+                            description: product.description,
+                            price: product.price,
+                            school: product.school,
+                          }));
+                          navigate('/publish');
+                          toast({ title: '已复制物品信息到发布页' });
+                        }}
+                        className="text-xs text-primary hover:text-primary/80 flex items-center gap-0.5"
+                      >
+                        <RefreshCw className="h-3 w-3" />重新发布
+                      </button>
                     )}
                     {product.status !== 'in_trade' && product.status !== 'sold' && (
                       <button
