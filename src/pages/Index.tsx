@@ -302,7 +302,7 @@ const Index: React.FC = () => {
         if (sellerIds.length > 0) {
           const { data: sellerData } = await supabase
             .from('profiles')
-            .select('user_id, nickname, phone, community, school')
+            .select('user_id, nickname, phone, community, school, city, district')
             .in('user_id', sellerIds);
           if (sellerData) {
             const map: Record<string, SellerProfile> = {};
