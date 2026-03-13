@@ -1,1 +1,7 @@
 project_id = "vnqdwxziqarqdfzydnhf"
+
+[functions.auto-upgrade-grade]
+verify_jwt = false
+
+[functions.auto-review]
+verify_jwt = false
