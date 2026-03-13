@@ -312,6 +312,9 @@ const Index: React.FC = () => {
     setFilterCommunities([]);
     setSearchText('');
     setActiveSearch('');
+    setFilterProvince('');
+    setFilterCity('');
+    setFilterDistrict('');
   };
 
   const addToCart = async (productId: string, e: React.MouseEvent) => {
