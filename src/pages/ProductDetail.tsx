@@ -133,6 +133,7 @@ const ProductDetail: React.FC = () => {
       grade: product.grade,
       semester: product.semester,
       book_tag: product.book_tag,
+      cover_image_url: product.cover_image_url,
     }));
     navigate('/publish');
     toast({ title: '已复制书籍信息到发布页' });
