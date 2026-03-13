@@ -97,18 +97,23 @@ const AdminStats: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [profilesRes, productsRes, viewsCountRes, reviewsRes, profileDetailsRes, viewDatesRes] = await Promise.all([
+      const [profilesRes, productsRes, reviewsRes, profileDetailsRes, viewDatesRes] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
-        supabase.from('products').select('id, type, status, price, book_tag, created_at, view_count, updated_at'),
-        supabase.from('product_views').select('id', { count: 'exact', head: true }),
+        supabase.from('products').select('id, type, status, price, book_tag, created_at, view_count, updated_at').limit(5000),
         supabase.from('reviews').select('id, is_default'),
         supabase.from('profiles').select('created_at, city, child_grade'),
-        supabase.from('product_views').select('viewed_at'),
+        supabase.from('product_views').select('viewed_at').limit(5000),
       ]);
+
+      if (productsRes.error) console.error('Products query error:', productsRes.error);
+      if (viewDatesRes.error) console.error('Views query error:', viewDatesRes.error);
+      if (profileDetailsRes.error) console.error('Profiles query error:', profileDetailsRes.error);
 
       const products = productsRes.data || [];
       const reviews = reviewsRes.data || [];
       const profileDetails = profileDetailsRes.data || [];
+
+      console.log('Admin stats loaded:', { products: products.length, views: (viewDatesRes.data || []).length, profiles: profileDetails.length });
 
       const bookCount = products.filter(p => p.type === 'book').length;
       const otherCount = products.filter(p => p.type === 'other').length;
@@ -118,11 +123,11 @@ const AdminStats: React.FC = () => {
 
       setStats({ userCount: profilesRes.count || 0, bookCount, otherCount, soldCount, offShelfCount, totalViews });
 
-      setUserDates(profileDetails.map(p => p.created_at));
-      setProductDates(products.map(p => p.created_at));
-      setSoldDates(products.filter(p => p.status === 'sold').map(p => p.updated_at));
-      setOffShelfDates(products.filter(p => p.status === 'off_shelf').map(p => p.updated_at));
-      setViewDates((viewDatesRes.data || []).map(v => v.viewed_at));
+      setUserDates(profileDetails.map(p => p.created_at).filter(Boolean));
+      setProductDates(products.map(p => p.created_at).filter(Boolean));
+      setSoldDates(products.filter(p => p.status === 'sold').map(p => p.updated_at).filter(Boolean));
+      setOffShelfDates(products.filter(p => p.status === 'off_shelf').map(p => p.updated_at).filter(Boolean));
+      setViewDates((viewDatesRes.data || []).map(v => v.viewed_at).filter(Boolean));
 
       // City distribution
       const cityMap: Record<string, number> = {};
