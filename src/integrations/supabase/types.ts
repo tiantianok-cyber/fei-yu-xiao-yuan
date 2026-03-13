@@ -14,16 +14,374 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cart_items: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      login_logs: {
+        Row: {
+          device: string | null
+          id: string
+          ip: string | null
+          login_time: string
+          user_id: string
+        }
+        Insert: {
+          device?: string | null
+          id?: string
+          ip?: string | null
+          login_time?: string
+          user_id: string
+        }
+        Update: {
+          device?: string | null
+          id?: string
+          ip?: string | null
+          login_time?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          id: string
+          order_id: string
+          price_at_purchase: number
+          product_id: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          price_at_purchase: number
+          product_id: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          price_at_purchase?: number
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          buyer_id: string
+          cancelled_at: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          seller_id: string
+          status: Database["public"]["Enums"]["order_status"]
+        }
+        Insert: {
+          buyer_id: string
+          cancelled_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          seller_id: string
+          status?: Database["public"]["Enums"]["order_status"]
+        }
+        Update: {
+          buyer_id?: string
+          cancelled_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          seller_id?: string
+          status?: Database["public"]["Enums"]["order_status"]
+        }
+        Relationships: []
+      }
+      product_views: {
+        Row: {
+          id: string
+          product_id: string
+          viewed_at: string
+          viewer_id: string | null
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          viewed_at?: string
+          viewer_id?: string | null
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          viewed_at?: string
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_views_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          author: string | null
+          book_tag: string | null
+          condition: Database["public"]["Enums"]["product_condition"]
+          condition_note: string | null
+          cover_image_url: string | null
+          created_at: string
+          defect_description: string | null
+          description: string | null
+          grade: string[] | null
+          id: string
+          name: string
+          price: number
+          publish_date: string | null
+          publisher: string | null
+          school: string | null
+          seller_id: string
+          semester: string | null
+          status: Database["public"]["Enums"]["product_status"]
+          translator: string | null
+          type: Database["public"]["Enums"]["product_type"]
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          author?: string | null
+          book_tag?: string | null
+          condition: Database["public"]["Enums"]["product_condition"]
+          condition_note?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          defect_description?: string | null
+          description?: string | null
+          grade?: string[] | null
+          id?: string
+          name: string
+          price: number
+          publish_date?: string | null
+          publisher?: string | null
+          school?: string | null
+          seller_id: string
+          semester?: string | null
+          status?: Database["public"]["Enums"]["product_status"]
+          translator?: string | null
+          type?: Database["public"]["Enums"]["product_type"]
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          author?: string | null
+          book_tag?: string | null
+          condition?: Database["public"]["Enums"]["product_condition"]
+          condition_note?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          defect_description?: string | null
+          description?: string | null
+          grade?: string[] | null
+          id?: string
+          name?: string
+          price?: number
+          publish_date?: string | null
+          publisher?: string | null
+          school?: string | null
+          seller_id?: string
+          semester?: string | null
+          status?: Database["public"]["Enums"]["product_status"]
+          translator?: string | null
+          type?: Database["public"]["Enums"]["product_type"]
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          child_grade: string | null
+          child_semester: string | null
+          city: string | null
+          community: string | null
+          created_at: string
+          district: string | null
+          id: string
+          nickname: string
+          phone: string
+          province: string | null
+          school: string | null
+          status: Database["public"]["Enums"]["account_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          child_grade?: string | null
+          child_semester?: string | null
+          city?: string | null
+          community?: string | null
+          created_at?: string
+          district?: string | null
+          id?: string
+          nickname: string
+          phone: string
+          province?: string | null
+          school?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          child_grade?: string | null
+          child_semester?: string | null
+          city?: string | null
+          community?: string | null
+          created_at?: string
+          district?: string | null
+          id?: string
+          nickname?: string
+          phone?: string
+          province?: string | null
+          school?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          content: string | null
+          cooperation_score: number
+          created_at: string
+          description_match_score: number | null
+          id: string
+          is_default: boolean
+          order_id: string
+          reviewee_id: string
+          reviewer_id: string
+          reviewer_role: Database["public"]["Enums"]["reviewer_role"]
+        }
+        Insert: {
+          content?: string | null
+          cooperation_score: number
+          created_at?: string
+          description_match_score?: number | null
+          id?: string
+          is_default?: boolean
+          order_id: string
+          reviewee_id: string
+          reviewer_id: string
+          reviewer_role: Database["public"]["Enums"]["reviewer_role"]
+        }
+        Update: {
+          content?: string | null
+          cooperation_score?: number
+          created_at?: string
+          description_match_score?: number | null
+          id?: string
+          is_default?: boolean
+          order_id?: string
+          reviewee_id?: string
+          reviewer_id?: string
+          reviewer_role?: Database["public"]["Enums"]["reviewer_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      account_status: "enabled" | "disabled"
+      app_role: "admin" | "moderator" | "user"
+      order_status: "trading" | "completed" | "cancelled"
+      product_condition:
+        | "brand_new"
+        | "almost_new"
+        | "slightly_used"
+        | "used"
+        | "heavily_used"
+      product_status: "on_sale" | "in_trade" | "sold" | "off_shelf"
+      product_type: "book" | "other"
+      reviewer_role: "buyer" | "seller"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +508,20 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      account_status: ["enabled", "disabled"],
+      app_role: ["admin", "moderator", "user"],
+      order_status: ["trading", "completed", "cancelled"],
+      product_condition: [
+        "brand_new",
+        "almost_new",
+        "slightly_used",
+        "used",
+        "heavily_used",
+      ],
+      product_status: ["on_sale", "in_trade", "sold", "off_shelf"],
+      product_type: ["book", "other"],
+      reviewer_role: ["buyer", "seller"],
+    },
   },
 } as const
