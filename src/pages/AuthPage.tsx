@@ -64,7 +64,7 @@ const AuthPage: React.FC = () => {
           </div>
 
           {/* Form */}
-          <div className="bg-card rounded-b-xl border border-t-0 border-border p-6">
+          <div className="bg-card rounded-xl border border-border p-6 mt-4">
             {mode === 'login' ? (
               <LoginForm onSwitchToRegister={() => setMode('register')} />
             ) : (
