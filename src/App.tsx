@@ -32,7 +32,7 @@ const App = () => (
           <Routes>
             <Route element={<AppLayout />}>
               <Route path="/" element={<Index />} />
-              <Route path="/product/:id" element={<PlaceholderPage title="商品详情" />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/publish" element={<PlaceholderPage title="发布物品" />} />
               <Route path="/cart" element={<PlaceholderPage title="购物车" />} />
               <Route path="/orders" element={<PlaceholderPage title="订单" />} />
