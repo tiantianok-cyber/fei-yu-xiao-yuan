@@ -1,34 +1,28 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, RotateCcw, Plus, Store, ShoppingCart, Phone } from 'lucide-react';
+import { Search, X, RotateCcw, Plus, Store, ShoppingCart, Phone, MapPin, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import logo from '@/assets/logo.png';
+import { CitySelector } from '@/components/auth/CitySelector';
 
-const GRADES = ['幼儿园', '一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '初一', '初二', '初三', '高一'];
+const GRADES = ['幼儿园', '一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级', '高一', '高二', '高三'];
 const SEMESTERS = ['上学期', '下学期'];
-const CONDITIONS: { value: string; label: string; desc: string }[] = [
-  { value: 'brand_new', label: '全新', desc: '未使用，包装完好' },
-  { value: 'almost_new', label: '几乎全新', desc: '仅翻阅，无笔记折痕' },
-  { value: 'slightly_used', label: '轻微使用', desc: '少量笔记，整体良好' },
-  { value: 'used', label: '使用过', desc: '有笔记标注，不影响阅读' },
-  { value: 'heavily_used', label: '大量使用', desc: '较多笔记磨损，可正常使用' },
+const CONDITIONS: { value: string; label: string }[] = [
+  { value: 'brand_new', label: '全新' },
+  { value: 'almost_new', label: '九九新' },
+  { value: 'slightly_used', label: '九五新' },
+  { value: 'used', label: '九成新' },
+  { value: 'heavily_used', label: '九成新以下' },
 ];
 
 interface Product {
@@ -54,6 +48,8 @@ interface SellerProfile {
   user_id: string;
   nickname: string;
   phone: string;
+  community: string | null;
+  school: string | null;
 }
 
 const maskPhone = (phone: string) => {
@@ -63,10 +59,97 @@ const maskPhone = (phone: string) => {
 
 const conditionLabel = (val: string) => CONDITIONS.find(c => c.value === val)?.label || val;
 
+// Chip component for filter options
+const Chip: React.FC<{ label: string; selected: boolean; onClick: () => void }> = ({ label, selected, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-3 py-1 rounded-full text-sm transition-colors whitespace-nowrap ${
+      selected
+        ? 'bg-primary text-primary-foreground'
+        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+    }`}
+  >
+    {label}
+  </button>
+);
+
+// Searchable multi-select tag input
+const SearchableTagInput: React.FC<{
+  placeholder: string;
+  options: string[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+}> = ({ placeholder, options, selected, onChange }) => {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filtered = useMemo(() => {
+    if (!query) return options.filter(o => !selected.includes(o));
+    return options.filter(o => o.includes(query) && !selected.includes(o));
+  }, [options, query, selected]);
+
+  const addItem = (item: string) => {
+    onChange([...selected, item]);
+    setQuery('');
+  };
+
+  const removeItem = (item: string) => {
+    onChange(selected.filter(s => s !== item));
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <div className="relative">
+        <Input
+          ref={inputRef}
+          placeholder={placeholder}
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          className="h-9 text-sm"
+        />
+        {open && filtered.length > 0 && (
+          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-md max-h-[160px] overflow-y-auto">
+            {filtered.slice(0, 20).map(item => (
+              <button
+                key={item}
+                className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                onMouseDown={(e) => { e.preventDefault(); addItem(item); }}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selected.map(item => (
+            <span
+              key={item}
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-primary text-primary-foreground"
+            >
+              {item}
+              <X className="h-3 w-3 cursor-pointer" onClick={() => removeItem(item)} />
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Index: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { toast } = useToast();
+
+  // City filter
+  const [filterCity, setFilterCity] = useState('');
+  const [filterDistrict, setFilterDistrict] = useState('');
+  const [filterProvince, setFilterProvince] = useState('');
 
   // Filters
   const [searchText, setSearchText] = useState('');
@@ -75,20 +158,22 @@ const Index: React.FC = () => {
   const [filterGrade, setFilterGrade] = useState<string>('all');
   const [filterSemester, setFilterSemester] = useState<string>('all');
   const [filterCondition, setFilterCondition] = useState<string>('all');
-  const [filterSchool, setFilterSchool] = useState<string>('all');
-  const [filterCommunity, setFilterCommunity] = useState<string>('all');
+  const [filterSchools, setFilterSchools] = useState<string[]>([]);
+  const [filterCommunities, setFilterCommunities] = useState<string[]>([]);
 
   // Data
   const [products, setProducts] = useState<Product[]>([]);
   const [sellers, setSellers] = useState<Record<string, SellerProfile>>({});
-  const [schools, setSchools] = useState<string[]>([]);
-  const [communities, setCommunities] = useState<string[]>([]);
+  const [schoolOptions, setSchoolOptions] = useState<string[]>([]);
+  const [communityOptions, setCommunityOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Initialize filters from profile
+  // Initialize from profile
   useEffect(() => {
     if (profile) {
-      if (profile.school) setFilterSchool(profile.school);
+      if (profile.city) setFilterCity(profile.city);
+      if (profile.district) setFilterDistrict(profile.district);
+      if (profile.province) setFilterProvince(profile.province);
     }
   }, [profile]);
 
@@ -101,7 +186,7 @@ const Index: React.FC = () => {
         .in('status', ['on_sale', 'in_trade']);
       if (prods) {
         const uniqueSchools = [...new Set(prods.map(p => p.school).filter(Boolean))] as string[];
-        setSchools(uniqueSchools);
+        setSchoolOptions(uniqueSchools);
       }
       const { data: profs } = await supabase
         .from('profiles')
@@ -110,7 +195,7 @@ const Index: React.FC = () => {
         .not('community', 'eq', '');
       if (profs) {
         const uniqueComms = [...new Set(profs.map(p => p.community).filter(Boolean))] as string[];
-        setCommunities(uniqueComms);
+        setCommunityOptions(uniqueComms);
       }
     };
     loadFilterOptions();
@@ -127,8 +212,8 @@ const Index: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (filterType !== 'all') query = query.eq('type', filterType as 'book' | 'other');
-      if (filterCondition !== 'all') query = query.eq('condition', filterCondition as any);
-      if (filterSchool !== 'all') query = query.eq('school', filterSchool);
+      if (filterType !== 'other' && filterCondition !== 'all') query = query.eq('condition', filterCondition as any);
+      if (filterSchools.length > 0) query = query.in('school', filterSchools);
       if (filterSemester !== 'all') query = query.eq('semester', filterSemester);
       if (filterGrade !== 'all') query = query.contains('grade', [filterGrade]);
 
@@ -153,11 +238,11 @@ const Index: React.FC = () => {
         if (sellerIds.length > 0) {
           const { data: sellerData } = await supabase
             .from('profiles')
-            .select('user_id, nickname, phone')
+            .select('user_id, nickname, phone, community, school')
             .in('user_id', sellerIds);
           if (sellerData) {
             const map: Record<string, SellerProfile> = {};
-            sellerData.forEach(s => { map[s.user_id] = s; });
+            sellerData.forEach(s => { map[s.user_id] = s as SellerProfile; });
             setSellers(map);
           }
         }
@@ -165,7 +250,7 @@ const Index: React.FC = () => {
       setLoading(false);
     };
     loadProducts();
-  }, [filterType, filterGrade, filterSemester, filterCondition, filterSchool, activeSearch]);
+  }, [filterType, filterGrade, filterSemester, filterCondition, filterSchools, activeSearch]);
 
   const handleSearch = () => {
     setActiveSearch(searchText.trim());
@@ -181,8 +266,8 @@ const Index: React.FC = () => {
     setFilterGrade('all');
     setFilterSemester('all');
     setFilterCondition('all');
-    setFilterSchool('all');
-    setFilterCommunity('all');
+    setFilterSchools([]);
+    setFilterCommunities([]);
     setSearchText('');
     setActiveSearch('');
   };
@@ -208,22 +293,52 @@ const Index: React.FC = () => {
     }
   };
 
+  const cityLabel = useMemo(() => {
+    if (filterCity && filterDistrict) return `${filterCity}·${filterDistrict}`;
+    if (filterCity) return filterCity;
+    return '选择城市';
+  }, [filterCity, filterDistrict]);
+
+  const isBookType = filterType !== 'other';
+
   return (
     <div className="min-h-[calc(100vh-3.5rem)]">
       {/* Warning banner */}
       <div className="bg-accent/30 border-b border-accent/50 px-4 py-2">
         <p className="text-xs text-accent-foreground text-center">
-          ⚠️ 温馨提示：本平台仅提供信息展示，不参与实际交易。请交易双方当面验货，注意交易安全。
+          ⚠️ 本平台仅提供信息展示，不参与实际交易。交易风险由双方自担，建议在公共场所线下交易。
         </p>
       </div>
 
-      <div className="container mx-auto px-4 py-4 space-y-4">
-        {/* Search bar */}
-        <div className="flex gap-2">
+      <div className="container mx-auto px-4 py-4 space-y-3">
+        {/* Row 1: City selector + Search */}
+        <div className="flex gap-2 items-center">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="shrink-0 h-10 text-sm gap-1 max-w-[200px]">
+                <MapPin className="h-4 w-4 text-primary shrink-0" />
+                <span className="truncate">{cityLabel}</span>
+                <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[360px] p-4" align="start">
+              <CitySelector
+                province={filterProvince}
+                city={filterCity}
+                district={filterDistrict}
+                onChange={(p, c, d) => {
+                  setFilterProvince(p);
+                  setFilterCity(c);
+                  setFilterDistrict(d);
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="搜索书名、作者、描述..."
+              placeholder="搜索书名、物品名称..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -231,81 +346,87 @@ const Index: React.FC = () => {
             />
           </div>
           {activeSearch ? (
-            <Button variant="outline" size="sm" onClick={handleCancelSearch} className="shrink-0">
+            <Button variant="outline" size="sm" onClick={handleCancelSearch} className="shrink-0 h-10">
               <X className="h-4 w-4 mr-1" />取消
             </Button>
           ) : (
-            <Button size="sm" onClick={handleSearch} className="shrink-0">搜索</Button>
+            <Button onClick={handleSearch} className="shrink-0 h-10 px-6">搜索</Button>
           )}
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-2 items-center">
-          {schools.length > 0 && (
-            <Select value={filterSchool} onValueChange={setFilterSchool}>
-              <SelectTrigger className="w-auto min-w-[100px] h-8 text-xs">
-                <SelectValue placeholder="学校" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[240px]">
-                <SelectItem value="all">全部学校</SelectItem>
-                {schools.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
+        {/* Filter panel */}
+        <div className="bg-card rounded-xl border border-border p-4 space-y-4">
+          {/* 类型 */}
+          <div className="space-y-1.5">
+            <span className="text-sm text-muted-foreground">类型</span>
+            <div className="flex flex-wrap gap-2">
+              <Chip label="全部" selected={filterType === 'all'} onClick={() => setFilterType('all')} />
+              <Chip label="书籍" selected={filterType === 'book'} onClick={() => setFilterType('book')} />
+              <Chip label="其他" selected={filterType === 'other'} onClick={() => { setFilterType('other'); setFilterCondition('all'); }} />
+            </div>
+          </div>
+
+          {/* 小区 + 学校 */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <span className="text-sm text-muted-foreground">小区</span>
+              <SearchableTagInput
+                placeholder="搜索小区..."
+                options={communityOptions}
+                selected={filterCommunities}
+                onChange={setFilterCommunities}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-sm text-muted-foreground">学校</span>
+              <SearchableTagInput
+                placeholder="搜索学校..."
+                options={schoolOptions}
+                selected={filterSchools}
+                onChange={setFilterSchools}
+              />
+            </div>
+          </div>
+
+          {/* 年级 */}
+          <div className="space-y-1.5">
+            <span className="text-sm text-muted-foreground">年级</span>
+            <div className="flex flex-wrap gap-2">
+              <Chip label="全部" selected={filterGrade === 'all'} onClick={() => setFilterGrade('all')} />
+              {GRADES.map(g => (
+                <Chip key={g} label={g} selected={filterGrade === g} onClick={() => setFilterGrade(g)} />
+              ))}
+            </div>
+          </div>
+
+          {/* 学期 */}
+          <div className="space-y-1.5">
+            <span className="text-sm text-muted-foreground">学期</span>
+            <div className="flex flex-wrap gap-2">
+              <Chip label="全部" selected={filterSemester === 'all'} onClick={() => setFilterSemester('all')} />
+              {SEMESTERS.map(s => (
+                <Chip key={s} label={s} selected={filterSemester === s} onClick={() => setFilterSemester(s)} />
+              ))}
+            </div>
+          </div>
+
+          {/* 成色 - only when not "other" type */}
+          {isBookType && (
+            <div className="space-y-1.5">
+              <span className="text-sm text-muted-foreground">成色</span>
+              <div className="flex flex-wrap gap-2">
+                <Chip label="全部" selected={filterCondition === 'all'} onClick={() => setFilterCondition('all')} />
+                {CONDITIONS.map(c => (
+                  <Chip key={c.value} label={c.label} selected={filterCondition === c.value} onClick={() => setFilterCondition(c.value)} />
+                ))}
+              </div>
+            </div>
           )}
 
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-auto min-w-[80px] h-8 text-xs">
-              <SelectValue placeholder="类型" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部类型</SelectItem>
-              <SelectItem value="book">书籍</SelectItem>
-              <SelectItem value="other">其他</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={filterGrade} onValueChange={setFilterGrade}>
-            <SelectTrigger className="w-auto min-w-[80px] h-8 text-xs">
-              <SelectValue placeholder="年级" />
-            </SelectTrigger>
-            <SelectContent className="max-h-[240px]">
-              <SelectItem value="all">全部年级</SelectItem>
-              {GRADES.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-            </SelectContent>
-          </Select>
-
-          <Select value={filterSemester} onValueChange={setFilterSemester}>
-            <SelectTrigger className="w-auto min-w-[80px] h-8 text-xs">
-              <SelectValue placeholder="学期" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部学期</SelectItem>
-              {SEMESTERS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
-
-          <Select value={filterCondition} onValueChange={setFilterCondition}>
-            <SelectTrigger className="w-auto min-w-[80px] h-8 text-xs">
-              <SelectValue placeholder="成色" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部成色</SelectItem>
-              {CONDITIONS.map(c => (
-                <SelectItem key={c.value} value={c.value}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>{c.label}</span>
-                    </TooltipTrigger>
-                    <TooltipContent>{c.desc}</TooltipContent>
-                  </Tooltip>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button variant="ghost" size="sm" onClick={handleReset} className="h-8 text-xs text-muted-foreground">
-            <RotateCcw className="h-3 w-3 mr-1" />重置
-          </Button>
+          {/* Reset */}
+          <button onClick={handleReset} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <RotateCcw className="h-3.5 w-3.5" />重置筛选
+          </button>
         </div>
 
         {/* Product list */}
@@ -383,7 +504,9 @@ const Index: React.FC = () => {
                         <Badge variant="outline" className="text-[10px] px-1.5 py-0">{product.semester}</Badge>
                       )}
                     </div>
-                    <Badge variant="secondary" className="text-[10px]">{conditionLabel(product.condition)}</Badge>
+                    {product.type === 'book' && (
+                      <Badge variant="secondary" className="text-[10px]">{conditionLabel(product.condition)}</Badge>
+                    )}
 
                     {/* Seller info */}
                     {seller && (
