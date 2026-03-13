@@ -185,7 +185,7 @@ const ProductDetail: React.FC = () => {
           )}
           {product.status === 'in_trade' && (
             <div className="absolute top-3 right-3">
-              <Badge className="bg-orange-500 text-white">交易中</Badge>
+              <Badge className="bg-accent text-accent-foreground">交易中</Badge>
             </div>
           )}
         </div>
