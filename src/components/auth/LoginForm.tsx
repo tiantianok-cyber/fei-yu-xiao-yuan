@@ -98,20 +98,13 @@ const LoginForm: React.FC<{ onSwitchToRegister: () => void }> = ({ onSwitchToReg
         </Button>
       </form>
 
-      <div className="flex items-center justify-between mt-4 text-sm">
+      <div className="flex items-center justify-end mt-4 text-sm">
         <button
           type="button"
           className="text-primary hover:underline"
           onClick={() => setShowForgotPwd(true)}
         >
           忘记密码？
-        </button>
-        <button
-          type="button"
-          className="text-primary hover:underline"
-          onClick={onSwitchToRegister}
-        >
-          注册新账号
         </button>
       </div>
 
