@@ -452,17 +452,18 @@ const Index: React.FC = () => {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {products.map((product) => {
               const seller = sellers[product.seller_id];
+              const infoLine = [product.school, product.grade?.join('/'), product.semester].filter(Boolean).join(' | ');
               return (
                 <div
                   key={product.id}
-                  className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
+                  className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-md transition-shadow cursor-pointer group flex"
                   onClick={() => navigate(`/product/${product.id}`)}
                 >
                   {/* Cover */}
-                  <div className="aspect-[1/1.42] bg-muted relative overflow-hidden">
+                  <div className="w-24 h-32 bg-muted relative overflow-hidden shrink-0">
                     {product.cover_image_url ? (
                       <img
                         src={product.cover_image_url}
@@ -472,85 +473,45 @@ const Index: React.FC = () => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                        <div className="text-center">
-                          <div className="text-3xl mb-1">📖</div>
-                          <span className="text-xs">{product.type === 'book' ? '书籍' : '物品'}</span>
-                        </div>
+                        <div className="text-2xl">📖</div>
                       </div>
                     )}
                     {product.status === 'in_trade' && (
-                      <div className="absolute top-2 right-2">
-                        <Badge variant="secondary" className="text-xs bg-accent text-accent-foreground border-accent">
-                          交易中
-                        </Badge>
+                      <div className="absolute top-1 left-1">
+                        <Badge variant="secondary" className="text-[10px] px-1 py-0 bg-accent text-accent-foreground">交易中</Badge>
                       </div>
                     )}
                   </div>
 
                   {/* Info */}
-                  <div className="p-3 space-y-1.5">
-                    <h3 className="font-medium text-sm text-foreground line-clamp-1">{product.name}</h3>
-                    {product.type === 'book' && product.author && (
-                      <p className="text-xs text-muted-foreground line-clamp-1">{product.author}</p>
-                    )}
-                    {product.school && (
-                      <p className="text-xs text-muted-foreground line-clamp-1">🏫 {product.school}</p>
-                    )}
-                    <div className="flex flex-wrap gap-1">
-                      {product.grade?.map(g => (
-                        <Badge key={g} variant="outline" className="text-[10px] px-1.5 py-0">{g}</Badge>
-                      ))}
-                      {product.semester && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">{product.semester}</Badge>
+                  <div className="flex-1 p-2.5 flex flex-col justify-between min-w-0">
+                    <div className="space-y-1">
+                      <h3 className="font-medium text-sm text-foreground line-clamp-1">{product.name}</h3>
+                      {product.type === 'book' && product.author && (
+                        <p className="text-xs text-muted-foreground line-clamp-1">{product.author}</p>
+                      )}
+                      {infoLine && (
+                        <p className="text-xs text-muted-foreground line-clamp-1">{infoLine}</p>
+                      )}
+                      {product.type === 'book' && (
+                        <Badge variant="secondary" className="text-[10px]">{conditionLabel(product.condition)}</Badge>
                       )}
                     </div>
-                    {product.type === 'book' && (
-                      <Badge variant="secondary" className="text-[10px]">{conditionLabel(product.condition)}</Badge>
-                    )}
-
-                    {/* Seller info */}
-                    {seller && (
-                      <div className="flex items-center justify-between pt-1">
-                        <div className="flex items-center gap-1 min-w-0">
-                          <span className="text-xs text-muted-foreground truncate">{seller.nickname}</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/store/${product.seller_id}`);
-                            }}
-                            className="shrink-0"
-                          >
-                            <Store className="h-3 w-3 text-primary" />
-                          </button>
-                        </div>
-                        <a
-                          href={user ? `tel:${seller.phone}` : undefined}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!user) {
-                              e.preventDefault();
-                              navigate('/auth', { state: { from: '/' } });
-                            }
-                          }}
-                          className="text-xs text-muted-foreground flex items-center gap-0.5"
-                        >
-                          <Phone className="h-3 w-3" />
-                          {user ? seller.phone : maskPhone(seller.phone)}
-                        </a>
-                      </div>
-                    )}
-
-                    {/* Price + cart */}
-                    <div className="flex items-center justify-between pt-1 border-t border-border/50">
+                    <div className="flex items-center justify-between mt-1">
                       <span className="text-primary font-bold text-sm">¥{product.price}</span>
-                      {product.status === 'on_sale' && (
-                        <button
-                          onClick={(e) => addToCart(product.id, e)}
-                          className="p-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                        >
-                          <ShoppingCart className="h-3.5 w-3.5" />
-                        </button>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        {seller && (
+                          <span className="text-[11px] text-muted-foreground truncate max-w-[60px]">{seller.nickname}</span>
+                        )}
+                        {product.status === 'on_sale' && (
+                          <button
+                            onClick={(e) => addToCart(product.id, e)}
+                            className="p-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          >
+                            <ShoppingCart className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Plus, ShoppingCart, ClipboardList, User, ChevronDown, LogOut } from 'lucide-react';
+import { Home, Plus, ShoppingCart, ClipboardList, User, ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import logo from '@/assets/logo.png';

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 const navItems = [
+  { path: '/', label: '首页', icon: Home },
   { path: '/publish', label: '发布', icon: Plus },
   { path: '/cart', label: '购物车', icon: ShoppingCart },
   { path: '/orders', label: '订单', icon: ClipboardList },
