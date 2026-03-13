@@ -85,7 +85,7 @@ const ProductDetail: React.FC = () => {
 
       const { data: sellerData } = await supabase
         .from('profiles')
-        .select('user_id, nickname, phone, community, school')
+        .select('user_id, nickname, phone, community, school, city, district')
         .eq('user_id', data.seller_id)
         .single();
       if (sellerData) setSeller(sellerData);
