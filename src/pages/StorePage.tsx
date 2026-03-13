@@ -14,6 +14,8 @@ interface SellerProfile {
   community: string | null;
   school: string | null;
   avatar_url: string | null;
+  city: string | null;
+  district: string | null;
 }
 
 interface Product {
@@ -90,7 +92,7 @@ const StorePage: React.FC = () => {
     const load = async () => {
       setLoading(true);
       const [{ data: profileData }, { data: productData }, { data: reviewData }] = await Promise.all([
-        supabase.from('profiles').select('user_id, nickname, phone, community, school, avatar_url').eq('user_id', userId).single(),
+        supabase.from('profiles').select('user_id, nickname, phone, community, school, avatar_url, city, district').eq('user_id', userId).single(),
         supabase.from('products').select('*').eq('seller_id', userId).in('status', ['on_sale', 'in_trade']).order('created_at', { ascending: false }),
         supabase.from('reviews').select('*').eq('reviewee_id', userId).order('created_at', { ascending: false }),
       ]);
@@ -218,7 +220,12 @@ const StorePage: React.FC = () => {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-foreground">{seller.nickname}</p>
+              <p className="font-semibold text-foreground">
+                {seller.nickname}
+                {(seller.city || seller.district) && (
+                  <span className="text-muted-foreground font-normal text-sm"> | {[seller.city, seller.district].filter(Boolean).join('')}</span>
+                )}
+              </p>
               <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                 <a
                   href={user ? `tel:${seller.phone}` : undefined}

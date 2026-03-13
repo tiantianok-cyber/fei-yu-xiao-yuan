@@ -46,6 +46,8 @@ interface SellerProfile {
   phone: string;
   community: string | null;
   school: string | null;
+  city: string | null;
+  district: string | null;
 }
 
 const maskPhone = (phone: string) => {
@@ -83,7 +85,7 @@ const ProductDetail: React.FC = () => {
 
       const { data: sellerData } = await supabase
         .from('profiles')
-        .select('user_id, nickname, phone, community, school')
+        .select('user_id, nickname, phone, community, school, city, district')
         .eq('user_id', data.seller_id)
         .single();
       if (sellerData) setSeller(sellerData);
@@ -304,7 +306,12 @@ const ProductDetail: React.FC = () => {
                     {seller.nickname.charAt(0)}
                   </div>
                   <div>
-                    <p className="font-medium text-sm text-foreground">{seller.nickname}</p>
+                    <p className="font-medium text-sm text-foreground">
+                      {seller.nickname}
+                      {(seller.city || seller.district) && (
+                        <span className="text-muted-foreground font-normal"> | {[seller.city, seller.district].filter(Boolean).join('')}</span>
+                      )}
+                    </p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <a
                         href={user ? `tel:${seller.phone}` : undefined}

@@ -50,6 +50,8 @@ interface SellerProfile {
   phone: string;
   community: string | null;
   school: string | null;
+  city: string | null;
+  district: string | null;
 }
 
 const maskPhone = (phone: string) => {
@@ -300,7 +302,7 @@ const Index: React.FC = () => {
         if (sellerIds.length > 0) {
           const { data: sellerData } = await supabase
             .from('profiles')
-            .select('user_id, nickname, phone, community, school')
+            .select('user_id, nickname, phone, community, school, city, district')
             .in('user_id', sellerIds);
           if (sellerData) {
             const map: Record<string, SellerProfile> = {};
@@ -576,7 +578,9 @@ const Index: React.FC = () => {
                       <span className="text-primary font-bold text-sm">¥{product.price}</span>
                       <div className="flex items-center gap-1.5">
                         {seller && (
-                          <span className="text-[11px] text-muted-foreground truncate max-w-[60px]">{seller.nickname}</span>
+                          <span className="text-[11px] text-muted-foreground truncate max-w-[120px]">
+                            {seller.nickname}{(seller.city || seller.district) && ` | ${[seller.city, seller.district].filter(Boolean).join('')}`}
+                          </span>
                         )}
                         {product.status === 'on_sale' && (
                           <button
