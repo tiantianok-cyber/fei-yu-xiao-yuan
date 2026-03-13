@@ -24,13 +24,12 @@ Deno.serve(async (req) => {
     global: { headers: { Authorization: authHeader } },
   });
 
-  const token = authHeader.replace('Bearer ', '');
-  const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
-  if (claimsError || !claimsData?.claims) {
+  const { data: { user }, error: userError } = await callerClient.auth.getUser(authHeader.replace('Bearer ', ''));
+  if (userError || !user) {
     return new Response(JSON.stringify({ error: '未授权' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
-  const callerId = claimsData.claims.sub;
+  const callerId = user.id;
 
   // Check admin role
   const adminClient = createClient(supabaseUrl, serviceRoleKey, {
