@@ -160,6 +160,7 @@ Deno.serve(async (req) => {
       const guardResp = await moderatorTargetGuard();
       if (guardResp) return guardResp;
 
+      // Update profile status
       const { error } = await adminClient
         .from('profiles')
         .update({ status: 'enabled' })
@@ -171,6 +172,9 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+
+      // Unban at auth level
+      await adminClient.auth.admin.updateUserById(userId, { ban_duration: 'none' });
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
