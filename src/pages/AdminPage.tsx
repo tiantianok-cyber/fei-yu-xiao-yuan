@@ -24,20 +24,20 @@ const AdminPage: React.FC = () => {
       navigate('/auth', { state: { from: '/tianadmin' } });
       return;
     }
-    // Check admin role
-    supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .in('role', ['admin', 'moderator'])
-      .then(({ data }) => {
-        if (!data || data.length === 0) {
-          toast.error('无管理员权限');
-          navigate('/');
-        } else {
-          setIsAdmin(true);
-        }
-      });
+    // Check admin/moderator role
+    (async () => {
+      const [{ data: isAdmin, error: adminError }, { data: isModerator, error: moderatorError }] = await Promise.all([
+        supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }),
+        supabase.rpc('has_role', { _user_id: user.id, _role: 'moderator' }),
+      ]);
+
+      if (adminError || moderatorError || (!isAdmin && !isModerator)) {
+        toast.error('无管理员权限');
+        navigate('/');
+      } else {
+        setIsAdmin(true);
+      }
+    })();
   }, [user, authLoading, navigate]);
 
   if (authLoading || isAdmin === null) {
