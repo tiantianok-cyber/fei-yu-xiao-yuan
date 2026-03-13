@@ -220,7 +220,12 @@ const StorePage: React.FC = () => {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-foreground">{seller.nickname}</p>
+              <p className="font-semibold text-foreground">
+                {seller.nickname}
+                {(seller.city || seller.district) && (
+                  <span className="text-muted-foreground font-normal text-sm"> | {[seller.city, seller.district].filter(Boolean).join('')}</span>
+                )}
+              </p>
               <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                 <a
                   href={user ? `tel:${seller.phone}` : undefined}

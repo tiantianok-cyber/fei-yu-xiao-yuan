@@ -578,7 +578,9 @@ const Index: React.FC = () => {
                       <span className="text-primary font-bold text-sm">¥{product.price}</span>
                       <div className="flex items-center gap-1.5">
                         {seller && (
-                          <span className="text-[11px] text-muted-foreground truncate max-w-[60px]">{seller.nickname}</span>
+                          <span className="text-[11px] text-muted-foreground truncate max-w-[120px]">
+                            {seller.nickname}{(seller.city || seller.district) && ` | ${[seller.city, seller.district].filter(Boolean).join('')}`}
+                          </span>
                         )}
                         {product.status === 'on_sale' && (
                           <button
