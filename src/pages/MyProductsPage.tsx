@@ -56,7 +56,7 @@ const MyProductsPage: React.FC = () => {
     setLoading(true);
     const { data } = await supabase
       .from('products')
-      .select('id, name, price, cover_image_url, status, type, view_count, created_at')
+      .select('id, name, price, cover_image_url, status, type, view_count, created_at, author, translator, publisher, publish_date, grade, semester, book_tag, condition, description, school')
       .eq('seller_id', user.id)
       .order('created_at', { ascending: false });
     setProducts((data || []) as MyProduct[]);
