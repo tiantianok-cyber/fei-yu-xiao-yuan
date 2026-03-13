@@ -88,7 +88,7 @@ const ProfilePage: React.FC = () => {
       return;
     }
     setSaving(true);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .update({
         nickname: nickname.trim(),
@@ -101,10 +101,13 @@ const ProfilePage: React.FC = () => {
         child_semester: childSemester,
         avatar_url: avatarUrl,
       })
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .select();
 
     if (error) {
-      toast({ title: '保存失败', variant: 'destructive' });
+      toast({ title: '保存失败', description: error.message, variant: 'destructive' });
+    } else if (!data || data.length === 0) {
+      toast({ title: '保存失败', description: '请重新登录后再试', variant: 'destructive' });
     } else {
       toast({ title: '保存成功 ✓' });
       await refreshProfile();
