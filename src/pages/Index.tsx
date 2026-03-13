@@ -108,8 +108,13 @@ const SearchableTagInput: React.FC<{
           onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
-          className="h-9 text-sm"
+          className="h-9 text-sm pr-8"
         />
+        {query && (
+          <button onClick={() => setQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
         {open && filtered.length > 0 && (
           <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-md max-h-[160px] overflow-y-auto">
             {filtered.slice(0, 20).map(item => (
@@ -342,8 +347,13 @@ const Index: React.FC = () => {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="pl-9"
+              className="pl-9 pr-8"
             />
+            {searchText && (
+              <button onClick={() => { setSearchText(''); setActiveSearch(''); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
           {activeSearch ? (
             <Button variant="outline" size="sm" onClick={handleCancelSearch} className="shrink-0 h-10">

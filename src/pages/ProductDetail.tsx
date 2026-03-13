@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, Copy, Phone, Store, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Copy, Phone, Store, ChevronRight, X } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -61,6 +62,7 @@ const ProductDetail: React.FC = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [seller, setSeller] = useState<SellerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showImage, setShowImage] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -175,7 +177,6 @@ const ProductDetail: React.FC = () => {
     { label: '成色', value: cond ? `${cond.label} · ${cond.desc}` : null },
     { label: '成色说明', value: product.condition_note },
     { label: '浏览量', value: String(product.view_count) },
-    { label: '发布时间', value: new Date(product.created_at).toLocaleDateString('zh-CN') },
   ].filter(r => r.value);
 
   return (
@@ -194,9 +195,9 @@ const ProductDetail: React.FC = () => {
           {/* Left: Cover + Actions */}
           <div className="md:w-64 shrink-0 space-y-4">
             {/* Cover */}
-            <div className="bg-muted rounded-xl overflow-hidden aspect-[1/1.42] relative">
+            <div className="bg-muted rounded-xl overflow-hidden aspect-[1/1.42] relative cursor-pointer" onClick={() => product.cover_image_url && setShowImage(true)}>
               {product.cover_image_url ? (
-                <img src={product.cover_image_url} alt={product.name} className="w-full h-full object-cover" />
+                <img src={product.cover_image_url} alt={product.name} className="w-full h-full object-cover hover:opacity-90 transition-opacity" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center text-muted-foreground">
@@ -312,6 +313,14 @@ const ProductDetail: React.FC = () => {
           </div>
         </div>
       </div>
+      {/* Image preview dialog */}
+      {product.cover_image_url && (
+        <Dialog open={showImage} onOpenChange={setShowImage}>
+          <DialogContent className="max-w-3xl p-2 bg-black/90 border-none">
+            <img src={product.cover_image_url} alt={product.name} className="w-full h-auto object-contain max-h-[85vh] rounded" />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
