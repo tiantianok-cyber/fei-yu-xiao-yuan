@@ -232,7 +232,7 @@ const ProductDetail: React.FC = () => {
                   <ShoppingCart className="h-4 w-4 mr-1" />加入购物车
                 </Button>
               )}
-              {product.type === 'book' && (
+              {product.type === 'book' && !isSelfProduct && (
                 <Button variant="outline" className="w-full" onClick={copyToPublish}>
                   <Copy className="h-4 w-4 mr-1" />我也要卖此书
                 </Button>
