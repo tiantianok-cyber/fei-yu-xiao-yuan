@@ -237,16 +237,6 @@ const RegisterForm: React.FC<{ onSwitchToLogin: () => void }> = ({ onSwitchToLog
         </Button>
       </form>
 
-      <div className="text-center mt-4 text-sm">
-        <span className="text-muted-foreground">已有账号？</span>
-        <button
-          type="button"
-          className="text-primary hover:underline ml-1"
-          onClick={onSwitchToLogin}
-        >
-          立即登录
-        </button>
-      </div>
 
       {/* User Agreement Dialog */}
       <Dialog open={showAgreement} onOpenChange={setShowAgreement}>
