@@ -359,7 +359,7 @@ const Index: React.FC = () => {
                     )}
                     {product.status === 'in_trade' && (
                       <div className="absolute top-2 right-2">
-                        <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700 border-orange-200">
+                        <Badge variant="secondary" className="text-xs bg-accent text-accent-foreground border-accent">
                           交易中
                         </Badge>
                       </div>
