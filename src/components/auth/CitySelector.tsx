@@ -34,6 +34,7 @@ interface CitySelectorProps {
   city: string;
   district: string;
   onChange: (province: string, city: string, district: string) => void;
+  showLocatePrompt?: boolean;
 }
 
 let cachedData: CityData | null = null;
