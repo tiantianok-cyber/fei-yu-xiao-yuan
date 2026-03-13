@@ -390,7 +390,7 @@ const Index: React.FC = () => {
                 <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[360px] p-4" align="start">
+            <PopoverContent className="w-[420px] p-4" align="start">
               <CitySelector
                 province={filterProvince}
                 city={filterCity}
