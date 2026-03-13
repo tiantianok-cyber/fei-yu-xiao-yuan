@@ -126,8 +126,8 @@ const Index: React.FC = () => {
         .in('status', ['on_sale', 'in_trade'])
         .order('created_at', { ascending: false });
 
-      if (filterType !== 'all') query = query.eq('type', filterType);
-      if (filterCondition !== 'all') query = query.eq('condition', filterCondition);
+      if (filterType !== 'all') query = query.eq('type', filterType as 'book' | 'other');
+      if (filterCondition !== 'all') query = query.eq('condition', filterCondition as any);
       if (filterSchool !== 'all') query = query.eq('school', filterSchool);
       if (filterSemester !== 'all') query = query.eq('semester', filterSemester);
       if (filterGrade !== 'all') query = query.contains('grade', [filterGrade]);
