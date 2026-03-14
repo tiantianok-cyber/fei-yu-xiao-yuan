@@ -305,10 +305,35 @@ const StorePage: React.FC = () => {
         {/* Products - Index-style horizontal cards */}
         <div>
           <h2 className="font-semibold text-foreground text-sm mb-3">在售物品</h2>
-          {products.length === 0 ? (
+          {/* Search bar */}
+          <div className="flex gap-2 items-center mb-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="搜索书名、物品名称..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="pl-9 pr-8"
+              />
+              {searchText && (
+                <button onClick={() => { setSearchText(''); setActiveSearch(''); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {activeSearch ? (
+              <Button variant="outline" size="sm" onClick={handleCancelSearch} className="shrink-0 h-10">
+                <X className="h-4 w-4 mr-1" />取消
+              </Button>
+            ) : (
+              <Button onClick={handleSearch} className="shrink-0 h-10 px-6">搜索</Button>
+            )}
+          </div>
+          {filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <div className="text-5xl mb-3">🏪</div>
-              <p>{isSelf ? '你还没有在售商品' : '该店铺暂无在售商品'}</p>
+              <p>{activeSearch ? '未找到匹配的物品' : (isSelf ? '你还没有在售商品' : '该店铺暂无在售商品')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
