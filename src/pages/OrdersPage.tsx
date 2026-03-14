@@ -165,7 +165,7 @@ const OrdersPage: React.FC = () => {
     setActionSubmitting(true);
 
     if (actionType === 'confirm') {
-      // Buyer confirms receipt → complete order
+      // Buyer confirms receipt → complete order; product status is synced in backend
       const { error } = await supabase
         .from('orders')
         .update({ status: 'completed' as any, completed_at: new Date().toISOString() })
@@ -174,17 +174,10 @@ const OrdersPage: React.FC = () => {
       if (error) {
         toast({ title: '操作失败', variant: 'destructive' });
       } else {
-        // Update product status to sold
-        const order = orders.find(o => o.id === actionOrderId);
-        if (order) {
-          await supabase
-            .from('products')
-            .update({ status: 'sold' as any })
-            .in('id', order.items.map(i => i.product_id));
-        }
         toast({ title: '已确认收货' });
       }
     } else if (actionType === 'cancel') {
+      // Cancel order; product status is synced in backend
       const { error } = await supabase
         .from('orders')
         .update({ status: 'cancelled' as any, cancelled_at: new Date().toISOString() })
@@ -193,14 +186,6 @@ const OrdersPage: React.FC = () => {
       if (error) {
         toast({ title: '取消失败', variant: 'destructive' });
       } else {
-        // Restore product status
-        const order = orders.find(o => o.id === actionOrderId);
-        if (order) {
-          await supabase
-            .from('products')
-            .update({ status: 'on_sale' as any })
-            .in('id', order.items.map(i => i.product_id));
-        }
         toast({ title: '已取消订单' });
       }
     }

@@ -212,17 +212,24 @@ const CartPage: React.FC = () => {
           product_id: item.product_id,
           price_at_purchase: item.price,
         }));
-        await supabase.from('order_items').insert(orderItems);
 
-        await supabase
-          .from('products')
-          .update({ status: 'in_trade' as any })
-          .in('id', sellerItems.map(i => i.product_id));
+        const { error: orderItemsError } = await supabase.from('order_items').insert(orderItems);
+        if (orderItemsError) {
+          toast({ title: '创建订单明细失败', variant: 'destructive' });
+          setSubmitting(false);
+          return;
+        }
 
-        await supabase
+        const { error: clearCartError } = await supabase
           .from('cart_items')
           .delete()
           .in('id', sellerItems.map(i => i.cart_id));
+
+        if (clearCartError) {
+          toast({ title: '清理购物车失败', variant: 'destructive' });
+          setSubmitting(false);
+          return;
+        }
       }
 
       toast({ title: '下单成功 🎉' });
