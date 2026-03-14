@@ -65,6 +65,7 @@ const ProductDetail: React.FC = () => {
   const [seller, setSeller] = useState<SellerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showImage, setShowImage] = useState(false);
+  const [inCart, setInCart] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -91,6 +92,15 @@ const ProductDetail: React.FC = () => {
       if (sellerData) setSeller(sellerData);
 
       if (user) {
+        // Check if product is already in cart
+        const { data: cartCheck } = await supabase
+          .from('cart_items')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('product_id', id)
+          .maybeSingle();
+        setInCart(!!cartCheck);
+
         await supabase.from('product_views').insert({
           product_id: id,
           viewer_id: user.id,
@@ -120,11 +130,13 @@ const ProductDetail: React.FC = () => {
     });
     if (error) {
       if (error.code === '23505') {
+        setInCart(true);
         toast({ title: '该物品已在购物车中' });
       } else {
         toast({ title: '加入购物车失败', variant: 'destructive' });
       }
     } else {
+      setInCart(true);
       toast({ title: '已加入购物车 🛒' });
     }
   };
@@ -230,9 +242,15 @@ const ProductDetail: React.FC = () => {
             {/* Action buttons */}
             <div className="space-y-2">
               {product.status === 'on_sale' && !isSelfProduct && (
-                <Button className="w-full" onClick={addToCart}>
-                  <ShoppingCart className="h-4 w-4 mr-1" />加入购物车
-                </Button>
+                inCart ? (
+                  <Button className="w-full" disabled variant="outline">
+                    <ShoppingCart className="h-4 w-4 mr-1" />已加入购物车
+                  </Button>
+                ) : (
+                  <Button className="w-full" onClick={addToCart}>
+                    <ShoppingCart className="h-4 w-4 mr-1" />加入购物车
+                  </Button>
+                )
               )}
               {product.type === 'book' && !isSelfProduct && (
                 <Button variant="outline" className="w-full" onClick={copyToPublish}>

@@ -186,6 +186,20 @@ const Index: React.FC = () => {
   const [communityOptions, setCommunityOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [cityUserIds, setCityUserIds] = useState<string[] | null>(null);
+  const [cartProductIds, setCartProductIds] = useState<Set<string>>(new Set());
+
+  // Load user's cart product IDs
+  useEffect(() => {
+    if (!user) { setCartProductIds(new Set()); return; }
+    const loadCart = async () => {
+      const { data } = await supabase
+        .from('cart_items')
+        .select('product_id')
+        .eq('user_id', user.id);
+      setCartProductIds(new Set((data || []).map(c => c.product_id)));
+    };
+    loadCart();
+  }, [user]);
 
   // Initialize from profile (only if no saved filters)
   useEffect(() => {
@@ -359,6 +373,7 @@ const Index: React.FC = () => {
         toast({ title: '加入购物车失败', description: error.message, variant: 'destructive' });
       }
     } else {
+      setCartProductIds(prev => new Set(prev).add(productId));
       toast({ title: '已加入购物车 🛒' });
     }
   };
@@ -583,12 +598,16 @@ const Index: React.FC = () => {
                           </span>
                         )}
                         {product.status === 'on_sale' && (
-                          <button
-                            onClick={(e) => addToCart(product.id, e)}
-                            className="p-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                          >
-                            <ShoppingCart className="h-3.5 w-3.5" />
-                          </button>
+                          cartProductIds.has(product.id) ? (
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">已加入</span>
+                          ) : (
+                            <button
+                              onClick={(e) => addToCart(product.id, e)}
+                              className="p-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                            >
+                              <ShoppingCart className="h-3.5 w-3.5" />
+                            </button>
+                          )
                         )}
                       </div>
                     </div>
