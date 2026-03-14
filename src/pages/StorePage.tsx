@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, Share2, Star, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Phone, Share2, Star, ShoppingCart, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -87,7 +88,8 @@ const StorePage: React.FC = () => {
   const [reviewerNames, setReviewerNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [cartProductIds, setCartProductIds] = useState<Set<string>>(new Set());
-
+  const [searchText, setSearchText] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
   // Load user's cart product IDs
   useEffect(() => {
     if (!user) { setCartProductIds(new Set()); return; }
@@ -162,6 +164,15 @@ const StorePage: React.FC = () => {
     }
     return Math.max(1.0, Math.min(5.0, Math.round(score * 10) / 10));
   }, [reviews]);
+
+  const filteredProducts = useMemo(() => {
+    if (!activeSearch) return products;
+    const keyword = activeSearch.toLowerCase();
+    return products.filter(p => p.name.toLowerCase().includes(keyword));
+  }, [products, activeSearch]);
+
+  const handleSearch = () => setActiveSearch(searchText.trim());
+  const handleCancelSearch = () => { setSearchText(''); setActiveSearch(''); };
 
   const isSelf = user?.id === userId;
 
@@ -294,14 +305,39 @@ const StorePage: React.FC = () => {
         {/* Products - Index-style horizontal cards */}
         <div>
           <h2 className="font-semibold text-foreground text-sm mb-3">在售物品</h2>
-          {products.length === 0 ? (
+          {/* Search bar */}
+          <div className="flex gap-2 items-center mb-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="搜索书名、物品名称..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="pl-9 pr-8"
+              />
+              {searchText && (
+                <button onClick={() => { setSearchText(''); setActiveSearch(''); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {activeSearch ? (
+              <Button variant="outline" size="sm" onClick={handleCancelSearch} className="shrink-0 h-10">
+                <X className="h-4 w-4 mr-1" />取消
+              </Button>
+            ) : (
+              <Button onClick={handleSearch} className="shrink-0 h-10 px-6">搜索</Button>
+            )}
+          </div>
+          {filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <div className="text-5xl mb-3">🏪</div>
-              <p>{isSelf ? '你还没有在售商品' : '该店铺暂无在售商品'}</p>
+              <p>{activeSearch ? '未找到匹配的物品' : (isSelf ? '你还没有在售商品' : '该店铺暂无在售商品')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {products.map((product) => {
+              {filteredProducts.map((product) => {
                 const infoLine = [product.school, product.grade?.join('/'), product.semester].filter(Boolean).join(' | ');
                 return (
                   <div
