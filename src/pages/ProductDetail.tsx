@@ -92,6 +92,15 @@ const ProductDetail: React.FC = () => {
       if (sellerData) setSeller(sellerData);
 
       if (user) {
+        // Check if product is already in cart
+        const { data: cartCheck } = await supabase
+          .from('cart_items')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('product_id', id)
+          .maybeSingle();
+        setInCart(!!cartCheck);
+
         await supabase.from('product_views').insert({
           product_id: id,
           viewer_id: user.id,
