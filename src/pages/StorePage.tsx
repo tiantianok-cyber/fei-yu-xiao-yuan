@@ -300,7 +300,9 @@ const StorePage: React.FC = () => {
 
         {/* Products - Index-style horizontal cards */}
         <div>
-          <h2 className="font-semibold text-foreground text-sm mb-3">在售物品</h2>
+          <h2 className="font-semibold text-foreground text-sm mb-3">
+            在售物品 {products.length > 0 && <span className="text-muted-foreground font-normal">({products.length})</span>}
+          </h2>
           {/* Search bar */}
           <div className="flex gap-2 items-center mb-3">
             <div className="relative flex-1">
