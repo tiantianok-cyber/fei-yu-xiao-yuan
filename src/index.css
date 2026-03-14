@@ -49,6 +49,12 @@
     --warning-foreground: 0 0% 100%;
     --success: 152 60% 40%;
     --success-foreground: 0 0% 100%;
+
+    --chart-1: 190 60% 42%;
+    --chart-2: 12 76% 58%;
+    --chart-3: 152 55% 42%;
+    --chart-4: 35 92% 55%;
+    --chart-5: 268 58% 56%;
   }
 
   .dark {
