@@ -373,6 +373,7 @@ const Index: React.FC = () => {
         toast({ title: '加入购物车失败', description: error.message, variant: 'destructive' });
       }
     } else {
+      setCartProductIds(prev => new Set(prev).add(productId));
       toast({ title: '已加入购物车 🛒' });
     }
   };
