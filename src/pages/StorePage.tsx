@@ -86,6 +86,20 @@ const StorePage: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewerNames, setReviewerNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [cartProductIds, setCartProductIds] = useState<Set<string>>(new Set());
+
+  // Load user's cart product IDs
+  useEffect(() => {
+    if (!user) { setCartProductIds(new Set()); return; }
+    const loadCart = async () => {
+      const { data } = await supabase
+        .from('cart_items')
+        .select('product_id')
+        .eq('user_id', user.id);
+      setCartProductIds(new Set((data || []).map(c => c.product_id)));
+    };
+    loadCart();
+  }, [user]);
 
   useEffect(() => {
     if (!userId) return;
