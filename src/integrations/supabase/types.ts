@@ -369,6 +369,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      recompute_product_status: {
+        Args: { _product_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       account_status: "enabled" | "disabled"
