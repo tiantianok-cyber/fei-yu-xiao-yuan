@@ -278,11 +278,7 @@ const StorePage: React.FC = () => {
                 </div>
               )}
             </div>
-            <div className="flex flex-col items-center gap-2 shrink-0">
-              <div className="text-right">
-                <p className="text-lg font-bold text-primary">{products.length}</p>
-                <p className="text-xs text-muted-foreground">在售</p>
-              </div>
+            <div className="flex items-center shrink-0">
               <Button
                 variant="outline"
                 size="sm"
