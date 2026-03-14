@@ -130,11 +130,13 @@ const ProductDetail: React.FC = () => {
     });
     if (error) {
       if (error.code === '23505') {
+        setInCart(true);
         toast({ title: '该物品已在购物车中' });
       } else {
         toast({ title: '加入购物车失败', variant: 'destructive' });
       }
     } else {
+      setInCart(true);
       toast({ title: '已加入购物车 🛒' });
     }
   };
