@@ -94,6 +94,12 @@
     --sidebar-accent-foreground: 190 40% 80%;
     --sidebar-border: 210 25% 20%;
     --sidebar-ring: 190 55% 50%;
+
+    --chart-1: 190 55% 50%;
+    --chart-2: 14 74% 62%;
+    --chart-3: 156 52% 50%;
+    --chart-4: 40 88% 60%;
+    --chart-5: 272 62% 64%;
   }
 }
 
