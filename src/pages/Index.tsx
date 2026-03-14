@@ -598,12 +598,16 @@ const Index: React.FC = () => {
                           </span>
                         )}
                         {product.status === 'on_sale' && (
-                          <button
-                            onClick={(e) => addToCart(product.id, e)}
-                            className="p-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                          >
-                            <ShoppingCart className="h-3.5 w-3.5" />
-                          </button>
+                          cartProductIds.has(product.id) ? (
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">已加入</span>
+                          ) : (
+                            <button
+                              onClick={(e) => addToCart(product.id, e)}
+                              className="p-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                            >
+                              <ShoppingCart className="h-3.5 w-3.5" />
+                            </button>
+                          )
                         )}
                       </div>
                     </div>

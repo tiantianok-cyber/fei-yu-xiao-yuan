@@ -242,9 +242,15 @@ const ProductDetail: React.FC = () => {
             {/* Action buttons */}
             <div className="space-y-2">
               {product.status === 'on_sale' && !isSelfProduct && (
-                <Button className="w-full" onClick={addToCart}>
-                  <ShoppingCart className="h-4 w-4 mr-1" />加入购物车
-                </Button>
+                inCart ? (
+                  <Button className="w-full" disabled variant="outline">
+                    <ShoppingCart className="h-4 w-4 mr-1" />已加入购物车
+                  </Button>
+                ) : (
+                  <Button className="w-full" onClick={addToCart}>
+                    <ShoppingCart className="h-4 w-4 mr-1" />加入购物车
+                  </Button>
+                )
               )}
               {product.type === 'book' && !isSelfProduct && (
                 <Button variant="outline" className="w-full" onClick={copyToPublish}>
