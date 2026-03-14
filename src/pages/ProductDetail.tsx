@@ -65,6 +65,7 @@ const ProductDetail: React.FC = () => {
   const [seller, setSeller] = useState<SellerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showImage, setShowImage] = useState(false);
+  const [inCart, setInCart] = useState(false);
 
   useEffect(() => {
     if (!id) return;
