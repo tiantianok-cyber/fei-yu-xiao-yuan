@@ -348,7 +348,7 @@ const StorePage: React.FC = () => {
                         <span className="text-primary font-bold text-sm">¥{product.price}</span>
                         {!isSelf && product.status === 'on_sale' && (
                           cartProductIds.has(product.id) ? (
-                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">已加入</span>
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">已加入购物车</span>
                           ) : (
                             <button
                               onClick={(e) => addToCart(product.id, e)}
