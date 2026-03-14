@@ -182,6 +182,7 @@ const StorePage: React.FC = () => {
         toast({ title: '加入购物车失败', variant: 'destructive' });
       }
     } else {
+      setCartProductIds(prev => new Set(prev).add(productId));
       toast({ title: '已加入购物车 🛒' });
     }
   };
