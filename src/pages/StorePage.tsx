@@ -165,6 +165,15 @@ const StorePage: React.FC = () => {
     return Math.max(1.0, Math.min(5.0, Math.round(score * 10) / 10));
   }, [reviews]);
 
+  const filteredProducts = useMemo(() => {
+    if (!activeSearch) return products;
+    const keyword = activeSearch.toLowerCase();
+    return products.filter(p => p.name.toLowerCase().includes(keyword));
+  }, [products, activeSearch]);
+
+  const handleSearch = () => setActiveSearch(searchText.trim());
+  const handleCancelSearch = () => { setSearchText(''); setActiveSearch(''); };
+
   const isSelf = user?.id === userId;
 
   const addToCart = async (productId: string, e: React.MouseEvent) => {
