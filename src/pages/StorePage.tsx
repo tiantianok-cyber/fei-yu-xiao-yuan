@@ -88,7 +88,8 @@ const StorePage: React.FC = () => {
   const [reviewerNames, setReviewerNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [cartProductIds, setCartProductIds] = useState<Set<string>>(new Set());
-
+  const [searchText, setSearchText] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
   // Load user's cart product IDs
   useEffect(() => {
     if (!user) { setCartProductIds(new Set()); return; }
