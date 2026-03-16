@@ -23,6 +23,9 @@ export const AppLayout: React.FC = () => {
       <main className={`flex-1 ${isMobile ? 'pb-16' : ''}`}>
         <Outlet />
       </main>
+      <footer className={`text-center text-xs text-muted-foreground py-4 ${isMobile ? 'pb-20' : ''}`}>
+        © 2026 飞呀飞&nbsp;&nbsp;&nbsp;渝ICP备 2026004126 号
+      </footer>
       {isMobile && <BottomNav />}
     </div>
   );
