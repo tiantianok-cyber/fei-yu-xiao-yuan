@@ -75,8 +75,8 @@ const StorePage: React.FC = () => {
 
   const [seller, setSeller] = useState<SellerProfile | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [reviewerNames, setReviewerNames] = useState<Record<string, string>>({});
+  // const [reviews, setReviews] = useState<Review[]>([]);
+  // const [reviewerNames, setReviewerNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [cartProductIds, setCartProductIds] = useState<Set<string>>(new Set());
   const [searchText, setSearchText] = useState('');
