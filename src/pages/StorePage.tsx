@@ -110,34 +110,7 @@ const StorePage: React.FC = () => {
     load();
   }, [userId]);
 
-  // Calculate composite score: (buyer avg × 0.6) + (seller cooperation avg × 0.4)
-  const compositeScore = useMemo(() => {
-    if (reviews.length === 0) return null;
-    const buyerReviews = reviews.filter(r => r.reviewer_role === 'buyer');
-    const sellerReviews = reviews.filter(r => r.reviewer_role === 'seller');
-
-    // Buyer reviews: use description_match_score if available, otherwise cooperation_score
-    const buyerAvg = buyerReviews.length > 0
-      ? buyerReviews.reduce((sum, r) => sum + (r.description_match_score ?? r.cooperation_score), 0) / buyerReviews.length
-      : null;
-
-    // Seller reviews: use cooperation_score
-    const sellerAvg = sellerReviews.length > 0
-      ? sellerReviews.reduce((sum, r) => sum + r.cooperation_score, 0) / sellerReviews.length
-      : null;
-
-    let score: number;
-    if (buyerAvg !== null && sellerAvg !== null) {
-      score = buyerAvg * 0.6 + sellerAvg * 0.4;
-    } else if (buyerAvg !== null) {
-      score = buyerAvg;
-    } else if (sellerAvg !== null) {
-      score = sellerAvg;
-    } else {
-      return null;
-    }
-    return Math.max(1.0, Math.min(5.0, Math.round(score * 10) / 10));
-  }, [reviews]);
+  // Composite score disabled
 
   const filteredProducts = useMemo(() => {
     if (!activeSearch) return products;
