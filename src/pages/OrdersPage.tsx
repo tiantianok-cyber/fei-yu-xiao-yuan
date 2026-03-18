@@ -160,7 +160,7 @@ const OrdersPage: React.FC = () => {
     setActionSubmitting(true);
 
     if (actionType === 'confirm') {
-      // Buyer confirms receipt → complete order; product status is synced in backend
+      // Buyer or seller confirms → complete order; product status is synced in backend
       const { error } = await supabase
         .from('orders')
         .update({ status: 'completed' as any, completed_at: new Date().toISOString() })
@@ -169,7 +169,7 @@ const OrdersPage: React.FC = () => {
       if (error) {
         toast({ title: '操作失败', variant: 'destructive' });
       } else {
-        toast({ title: '已确认收货' });
+        toast({ title: '交易已完成' });
       }
     } else if (actionType === 'cancel') {
       // Cancel order; product status is synced in backend
