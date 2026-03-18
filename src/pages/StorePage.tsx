@@ -36,16 +36,7 @@ interface Product {
   created_at: string;
 }
 
-interface Review {
-  id: string;
-  reviewer_id: string;
-  reviewer_role: string;
-  cooperation_score: number;
-  description_match_score: number | null;
-  content: string | null;
-  is_default: boolean;
-  created_at: string;
-}
+// Review interface disabled
 
 const CONDITIONS: Record<string, string> = {
   brand_new: '全新',
@@ -84,8 +75,8 @@ const StorePage: React.FC = () => {
 
   const [seller, setSeller] = useState<SellerProfile | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [reviewerNames, setReviewerNames] = useState<Record<string, string>>({});
+  // const [reviews, setReviews] = useState<Review[]>([]);
+  // const [reviewerNames, setReviewerNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [cartProductIds, setCartProductIds] = useState<Set<string>>(new Set());
   const [searchText, setSearchText] = useState('');
@@ -107,63 +98,19 @@ const StorePage: React.FC = () => {
     if (!userId) return;
     const load = async () => {
       setLoading(true);
-      const [{ data: profileData }, { data: productData }, { data: reviewData }] = await Promise.all([
+      const [{ data: profileData }, { data: productData }] = await Promise.all([
         supabase.from('profiles').select('user_id, nickname, phone, community, school, avatar_url, city, district').eq('user_id', userId).single(),
         supabase.from('products').select('*').eq('seller_id', userId).in('status', ['on_sale', 'in_trade']).order('created_at', { ascending: false }),
-        supabase.from('reviews').select('*').eq('reviewee_id', userId).order('created_at', { ascending: false }),
       ]);
 
       if (profileData) setSeller(profileData);
       if (productData) setProducts(productData as Product[]);
-      if (reviewData) {
-        setReviews(reviewData as Review[]);
-        // Load reviewer names
-        const reviewerIds = [...new Set(reviewData.map(r => r.reviewer_id))];
-        if (reviewerIds.length > 0) {
-          const { data: reviewerProfiles } = await supabase
-            .from('profiles')
-            .select('user_id, nickname')
-            .in('user_id', reviewerIds);
-          if (reviewerProfiles) {
-            const map: Record<string, string> = {};
-            reviewerProfiles.forEach(p => { map[p.user_id] = p.nickname; });
-            setReviewerNames(map);
-          }
-        }
-      }
       setLoading(false);
     };
     load();
   }, [userId]);
 
-  // Calculate composite score: (buyer avg × 0.6) + (seller cooperation avg × 0.4)
-  const compositeScore = useMemo(() => {
-    if (reviews.length === 0) return null;
-    const buyerReviews = reviews.filter(r => r.reviewer_role === 'buyer');
-    const sellerReviews = reviews.filter(r => r.reviewer_role === 'seller');
-
-    // Buyer reviews: use description_match_score if available, otherwise cooperation_score
-    const buyerAvg = buyerReviews.length > 0
-      ? buyerReviews.reduce((sum, r) => sum + (r.description_match_score ?? r.cooperation_score), 0) / buyerReviews.length
-      : null;
-
-    // Seller reviews: use cooperation_score
-    const sellerAvg = sellerReviews.length > 0
-      ? sellerReviews.reduce((sum, r) => sum + r.cooperation_score, 0) / sellerReviews.length
-      : null;
-
-    let score: number;
-    if (buyerAvg !== null && sellerAvg !== null) {
-      score = buyerAvg * 0.6 + sellerAvg * 0.4;
-    } else if (buyerAvg !== null) {
-      score = buyerAvg;
-    } else if (sellerAvg !== null) {
-      score = sellerAvg;
-    } else {
-      return null;
-    }
-    return Math.max(1.0, Math.min(5.0, Math.round(score * 10) / 10));
-  }, [reviews]);
+  // Composite score disabled
 
   const filteredProducts = useMemo(() => {
     if (!activeSearch) return products;
@@ -269,14 +216,7 @@ const StorePage: React.FC = () => {
                 {seller.school && <span>📚 {seller.school}</span>}
                 {seller.community && <span>🏠 {seller.community}</span>}
               </div>
-              {/* Composite Score */}
-              {compositeScore !== null && (
-                <div className="flex items-center gap-2 mt-1.5">
-                  <StarDisplay score={compositeScore} />
-                  <span className="text-sm font-semibold text-accent">{compositeScore.toFixed(1)}</span>
-                  <span className="text-xs text-muted-foreground">({reviews.length}条评价)</span>
-                </div>
-              )}
+              {/* Composite Score disabled */}
             </div>
             <div className="flex items-center shrink-0">
               <Button
@@ -401,51 +341,7 @@ const StorePage: React.FC = () => {
           )}
         </div>
 
-        {/* Reviews Section */}
-        <div>
-          <h2 className="font-semibold text-foreground text-sm mb-3">
-            用户评价 {reviews.length > 0 && <span className="text-muted-foreground font-normal">({reviews.length})</span>}
-          </h2>
-          {reviews.length === 0 ? (
-            <div className="bg-card rounded-xl border border-border p-6 text-center text-muted-foreground text-sm">
-              暂无评价
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {reviews.map((review) => {
-                const reviewerName = reviewerNames[review.reviewer_id] || '匿名';
-                const roleLabel = review.reviewer_role === 'buyer' ? '买家' : '卖家';
-                const score = review.reviewer_role === 'buyer'
-                  ? (review.description_match_score ?? review.cooperation_score)
-                  : review.cooperation_score;
-                return (
-                  <div key={review.id} className="bg-card rounded-xl border border-border p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">{maskName(reviewerName)}</span>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">{roleLabel}</Badge>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <StarDisplay score={score} />
-                        <span className="text-xs text-muted-foreground">{score}分</span>
-                      </div>
-                    </div>
-                    {review.content ? (
-                      <p className="text-sm text-foreground">{review.content}</p>
-                    ) : (
-                      <p className="text-sm text-muted-foreground italic">
-                        {review.is_default ? '系统默认好评' : '该用户未留下文字评价'}
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {new Date(review.created_at).toLocaleDateString('zh-CN')}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        {/* Reviews Section disabled */}
       </div>
     </div>
   );

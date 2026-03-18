@@ -13,8 +13,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+// import { Textarea } from '@/components/ui/textarea';
+// import { Label } from '@/components/ui/label';
 
 type Tab = 'all' | 'bought' | 'sold';
 
@@ -42,7 +42,7 @@ interface Order {
   buyer_phone?: string;
   seller_phone?: string;
   items: OrderItem[];
-  has_reviewed?: boolean;
+  // has_reviewed?: boolean;
 }
 
 const Chip: React.FC<{ label: string; selected: boolean; onClick: () => void }> = ({ label, selected, onClick }) => (
@@ -65,14 +65,14 @@ const OrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Review dialog state
-  const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
-  const [reviewRole, setReviewRole] = useState<'buyer' | 'seller'>('buyer');
-  const [reviewTarget, setReviewTarget] = useState<string>('');
-  const [cooperationScore, setCooperationScore] = useState(5);
-  const [descriptionMatchScore, setDescriptionMatchScore] = useState(5);
-  const [reviewContent, setReviewContent] = useState('');
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  // Review dialog state (disabled)
+  // const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
+  // const [reviewRole, setReviewRole] = useState<'buyer' | 'seller'>('buyer');
+  // const [reviewTarget, setReviewTarget] = useState<string>('');
+  // const [cooperationScore, setCooperationScore] = useState(5);
+  // const [descriptionMatchScore, setDescriptionMatchScore] = useState(5);
+  // const [reviewContent, setReviewContent] = useState('');
+  // const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   // Cancel / confirm dialog
   const [actionOrderId, setActionOrderId] = useState<string | null>(null);
@@ -121,13 +121,8 @@ const OrdersPage: React.FC = () => {
       .in('user_id', userIds);
     const profileMap = new Map((profilesData || []).map(p => [p.user_id, p]));
 
-    // Load reviews by current user
-    const { data: reviewsData } = await supabase
-      .from('reviews')
-      .select('order_id')
-      .eq('reviewer_id', user.id)
-      .in('order_id', orderIds);
-    const reviewedOrderIds = new Set((reviewsData || []).map(r => r.order_id));
+    // Reviews disabled
+    const reviewedOrderIds = new Set<string>();
 
     const enrichedOrders: Order[] = ordersData.map(o => {
       const buyerProfile = profileMap.get(o.buyer_id);
@@ -165,7 +160,7 @@ const OrdersPage: React.FC = () => {
     setActionSubmitting(true);
 
     if (actionType === 'confirm') {
-      // Buyer confirms receipt → complete order; product status is synced in backend
+      // Buyer or seller confirms → complete order; product status is synced in backend
       const { error } = await supabase
         .from('orders')
         .update({ status: 'completed' as any, completed_at: new Date().toISOString() })
@@ -174,7 +169,7 @@ const OrdersPage: React.FC = () => {
       if (error) {
         toast({ title: '操作失败', variant: 'destructive' });
       } else {
-        toast({ title: '已确认收货' });
+        toast({ title: '交易已完成' });
       }
     } else if (actionType === 'cancel') {
       // Cancel order; product status is synced in backend
@@ -196,59 +191,7 @@ const OrdersPage: React.FC = () => {
     loadOrders();
   };
 
-  const openReview = (order: Order) => {
-    const isBuyer = order.buyer_id === user?.id;
-    setReviewOrderId(order.id);
-    setReviewRole(isBuyer ? 'buyer' : 'seller');
-    setReviewTarget(isBuyer ? order.seller_id : order.buyer_id);
-    setCooperationScore(5);
-    setDescriptionMatchScore(5);
-    setReviewContent('');
-  };
-
-  const handleReviewSubmit = async () => {
-    if (!reviewOrderId || !user) return;
-    setReviewSubmitting(true);
-
-    const { error } = await supabase.from('reviews').insert({
-      order_id: reviewOrderId,
-      reviewer_id: user.id,
-      reviewee_id: reviewTarget,
-      reviewer_role: reviewRole,
-      cooperation_score: cooperationScore,
-      description_match_score: reviewRole === 'buyer' ? descriptionMatchScore : null,
-      content: reviewContent.trim() || null,
-    });
-
-    if (error) {
-      toast({ title: '评价失败', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: '评价成功' });
-    }
-
-    setReviewSubmitting(false);
-    setReviewOrderId(null);
-    loadOrders();
-  };
-
-  const ScoreSelector: React.FC<{ value: number; onChange: (v: number) => void; label: string }> = ({ value, onChange, label }) => (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map(n => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => onChange(n)}
-            className={`text-xl transition-colors ${n <= value ? 'text-yellow-500' : 'text-muted'}`}
-          >
-            ★
-          </button>
-        ))}
-        <span className="text-sm text-muted-foreground ml-2 self-center">{value}分</span>
-      </div>
-    </div>
-  );
+  // Review functions disabled
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-6">
@@ -348,27 +291,21 @@ const OrdersPage: React.FC = () => {
                       </>
                     )}
                     {order.status === 'trading' && isSeller && !isBuyer && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => { setActionOrderId(order.id); setActionType('cancel'); }}
-                      >
-                        取消订单
-                      </Button>
-                    )}
-                    {/* Completed → can review */}
-                    {order.status === 'completed' && !order.has_reviewed && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-primary text-primary hover:bg-primary/5"
-                        onClick={() => openReview(order)}
-                      >
-                        评价
-                      </Button>
-                    )}
-                    {order.status === 'completed' && order.has_reviewed && (
-                      <span className="text-xs text-muted-foreground self-center">已评价</span>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => { setActionOrderId(order.id); setActionType('cancel'); }}
+                        >
+                          取消订单
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => { setActionOrderId(order.id); setActionType('confirm'); }}
+                        >
+                          交易已完成
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -387,7 +324,7 @@ const OrdersPage: React.FC = () => {
           <p className="text-sm text-muted-foreground">
             {actionType === 'cancel'
               ? '取消后，物品将重新上架。确定取消吗？'
-              : '确认已收到物品并完成交易？'}
+              : '确认本次交易已完成？'}
           </p>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setActionOrderId(null); setActionType(null); }}>
@@ -405,36 +342,7 @@ const OrdersPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Review dialog */}
-      <Dialog open={!!reviewOrderId} onOpenChange={(open) => { if (!open) setReviewOrderId(null); }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>评价{reviewRole === 'buyer' ? '卖家' : '买家'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <ScoreSelector label="合作态度" value={cooperationScore} onChange={setCooperationScore} />
-            {reviewRole === 'buyer' && (
-              <ScoreSelector label="描述相符" value={descriptionMatchScore} onChange={setDescriptionMatchScore} />
-            )}
-            <div className="space-y-1.5">
-              <Label>评价内容（选填）</Label>
-              <Textarea
-                value={reviewContent}
-                onChange={(e) => setReviewContent(e.target.value)}
-                placeholder="写点什么..."
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setReviewOrderId(null)}>取消</Button>
-            <Button onClick={handleReviewSubmit} disabled={reviewSubmitting}>
-              {reviewSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              提交评价
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Review dialog disabled */}
     </div>
   );
 };

@@ -78,7 +78,7 @@ const AdminStats: React.FC = () => {
   const [stats, setStats] = useState<Stats>({ userCount: 0, bookCount: 0, otherCount: 0, soldCount: 0, offShelfCount: 0, totalViews: 0 });
   const [bookTags, setBookTags] = useState<{ name: string; value: number }[]>([]);
   const [priceData, setPriceData] = useState<{ name: string; count: number }[]>([]);
-  const [reviewStats, setReviewStats] = useState<{ name: string; count: number }[]>([]);
+  // const [reviewStats, setReviewStats] = useState<{ name: string; count: number }[]>([]);
   const [cityData, setCityData] = useState<{ name: string; count: number }[]>([]);
   const [gradeData, setGradeData] = useState<{ name: string; count: number }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,10 +97,9 @@ const AdminStats: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [profilesRes, productsRes, reviewsRes, profileDetailsRes, viewDatesRes] = await Promise.all([
+      const [profilesRes, productsRes, profileDetailsRes, viewDatesRes] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase.from('products').select('id, type, status, price, book_tag, created_at, view_count, updated_at').limit(5000),
-        supabase.from('reviews').select('id, is_default'),
         supabase.from('profiles').select('created_at, city, child_grade'),
         supabase.from('product_views').select('viewed_at').limit(5000),
       ]);
@@ -110,7 +109,6 @@ const AdminStats: React.FC = () => {
       if (profileDetailsRes.error) console.error('Profiles query error:', profileDetailsRes.error);
 
       const products = productsRes.data || [];
-      const reviews = reviewsRes.data || [];
       const profileDetails = profileDetailsRes.data || [];
 
       console.log('Admin stats loaded:', { products: products.length, views: (viewDatesRes.data || []).length, profiles: profileDetails.length });
@@ -170,12 +168,7 @@ const AdminStats: React.FC = () => {
         count: products.filter(p => p.price >= r.min && (r.max === Infinity ? true : p.price < r.max)).length,
       })));
 
-      const activeReviews = reviews.filter(r => !r.is_default).length;
-      const defaultReviews = reviews.filter(r => r.is_default).length;
-      setReviewStats([
-        { name: '主动评价', count: activeReviews },
-        { name: '默认好评', count: defaultReviews },
-      ]);
+      // Review stats disabled
     } catch (err) {
       console.error('Failed to load stats', err);
     }
@@ -350,21 +343,7 @@ const AdminStats: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Review stats */}
-        <Card>
-          <CardHeader><CardTitle className="text-sm">评价统计</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={reviewStats}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="count" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        {/* Review stats disabled */}
       </div>
     </div>
   );
