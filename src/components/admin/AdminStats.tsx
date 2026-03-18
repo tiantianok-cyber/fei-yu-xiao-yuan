@@ -109,7 +109,6 @@ const AdminStats: React.FC = () => {
       if (profileDetailsRes.error) console.error('Profiles query error:', profileDetailsRes.error);
 
       const products = productsRes.data || [];
-      const reviews = reviewsRes.data || [];
       const profileDetails = profileDetailsRes.data || [];
 
       console.log('Admin stats loaded:', { products: products.length, views: (viewDatesRes.data || []).length, profiles: profileDetails.length });
