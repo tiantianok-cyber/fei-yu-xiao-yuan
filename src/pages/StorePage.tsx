@@ -98,30 +98,13 @@ const StorePage: React.FC = () => {
     if (!userId) return;
     const load = async () => {
       setLoading(true);
-      const [{ data: profileData }, { data: productData }, { data: reviewData }] = await Promise.all([
+      const [{ data: profileData }, { data: productData }] = await Promise.all([
         supabase.from('profiles').select('user_id, nickname, phone, community, school, avatar_url, city, district').eq('user_id', userId).single(),
         supabase.from('products').select('*').eq('seller_id', userId).in('status', ['on_sale', 'in_trade']).order('created_at', { ascending: false }),
-        supabase.from('reviews').select('*').eq('reviewee_id', userId).order('created_at', { ascending: false }),
       ]);
 
       if (profileData) setSeller(profileData);
       if (productData) setProducts(productData as Product[]);
-      if (reviewData) {
-        setReviews(reviewData as Review[]);
-        // Load reviewer names
-        const reviewerIds = [...new Set(reviewData.map(r => r.reviewer_id))];
-        if (reviewerIds.length > 0) {
-          const { data: reviewerProfiles } = await supabase
-            .from('profiles')
-            .select('user_id, nickname')
-            .in('user_id', reviewerIds);
-          if (reviewerProfiles) {
-            const map: Record<string, string> = {};
-            reviewerProfiles.forEach(p => { map[p.user_id] = p.nickname; });
-            setReviewerNames(map);
-          }
-        }
-      }
       setLoading(false);
     };
     load();
