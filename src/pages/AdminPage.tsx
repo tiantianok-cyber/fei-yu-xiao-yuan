@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { LogOut, BarChart3, Users, Package, Star } from 'lucide-react';
+import { LogOut, BarChart3, Users, Package } from 'lucide-react';
 import AdminStats from '@/components/admin/AdminStats';
 import AdminUsers from '@/components/admin/AdminUsers';
 import AdminProducts from '@/components/admin/AdminProducts';
-import AdminReviews from '@/components/admin/AdminReviews';
+// import AdminReviews from '@/components/admin/AdminReviews';
 
 const AdminPage: React.FC = () => {
   const { user, profile, loading: authLoading, signOut } = useAuth();
