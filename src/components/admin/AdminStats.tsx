@@ -97,10 +97,9 @@ const AdminStats: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [profilesRes, productsRes, reviewsRes, profileDetailsRes, viewDatesRes] = await Promise.all([
+      const [profilesRes, productsRes, profileDetailsRes, viewDatesRes] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase.from('products').select('id, type, status, price, book_tag, created_at, view_count, updated_at').limit(5000),
-        supabase.from('reviews').select('id, is_default'),
         supabase.from('profiles').select('created_at, city, child_grade'),
         supabase.from('product_views').select('viewed_at').limit(5000),
       ]);
