@@ -168,12 +168,7 @@ const AdminStats: React.FC = () => {
         count: products.filter(p => p.price >= r.min && (r.max === Infinity ? true : p.price < r.max)).length,
       })));
 
-      const activeReviews = reviews.filter(r => !r.is_default).length;
-      const defaultReviews = reviews.filter(r => r.is_default).length;
-      setReviewStats([
-        { name: '主动评价', count: activeReviews },
-        { name: '默认好评', count: defaultReviews },
-      ]);
+      // Review stats disabled
     } catch (err) {
       console.error('Failed to load stats', err);
     }
