@@ -121,13 +121,8 @@ const OrdersPage: React.FC = () => {
       .in('user_id', userIds);
     const profileMap = new Map((profilesData || []).map(p => [p.user_id, p]));
 
-    // Load reviews by current user
-    const { data: reviewsData } = await supabase
-      .from('reviews')
-      .select('order_id')
-      .eq('reviewer_id', user.id)
-      .in('order_id', orderIds);
-    const reviewedOrderIds = new Set((reviewsData || []).map(r => r.order_id));
+    // Reviews disabled
+    const reviewedOrderIds = new Set<string>();
 
     const enrichedOrders: Order[] = ordersData.map(o => {
       const buyerProfile = profileMap.get(o.buyer_id);
