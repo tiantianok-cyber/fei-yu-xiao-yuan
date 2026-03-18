@@ -216,14 +216,7 @@ const StorePage: React.FC = () => {
                 {seller.school && <span>📚 {seller.school}</span>}
                 {seller.community && <span>🏠 {seller.community}</span>}
               </div>
-              {/* Composite Score */}
-              {compositeScore !== null && (
-                <div className="flex items-center gap-2 mt-1.5">
-                  <StarDisplay score={compositeScore} />
-                  <span className="text-sm font-semibold text-accent">{compositeScore.toFixed(1)}</span>
-                  <span className="text-xs text-muted-foreground">({reviews.length}条评价)</span>
-                </div>
-              )}
+              {/* Composite Score disabled */}
             </div>
             <div className="flex items-center shrink-0">
               <Button
