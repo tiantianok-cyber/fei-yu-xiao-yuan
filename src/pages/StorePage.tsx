@@ -36,16 +36,7 @@ interface Product {
   created_at: string;
 }
 
-interface Review {
-  id: string;
-  reviewer_id: string;
-  reviewer_role: string;
-  cooperation_score: number;
-  description_match_score: number | null;
-  content: string | null;
-  is_default: boolean;
-  created_at: string;
-}
+// Review interface disabled
 
 const CONDITIONS: Record<string, string> = {
   brand_new: '全新',
