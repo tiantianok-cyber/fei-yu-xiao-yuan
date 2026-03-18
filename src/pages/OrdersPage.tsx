@@ -77,6 +77,7 @@ const OrdersPage: React.FC = () => {
   // Cancel / confirm dialog
   const [actionOrderId, setActionOrderId] = useState<string | null>(null);
   const [actionType, setActionType] = useState<'cancel' | 'confirm' | null>(null);
+  const [actionRole, setActionRole] = useState<'buyer' | 'seller'>('buyer');
   const [actionSubmitting, setActionSubmitting] = useState(false);
 
   const loadOrders = async () => {
@@ -278,13 +279,13 @@ const OrdersPage: React.FC = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => { setActionOrderId(order.id); setActionType('cancel'); }}
+                          onClick={() => { setActionOrderId(order.id); setActionType('cancel'); setActionRole('buyer'); }}
                         >
                           取消订单
                         </Button>
                         <Button
                           size="sm"
-                          onClick={() => { setActionOrderId(order.id); setActionType('confirm'); }}
+                          onClick={() => { setActionOrderId(order.id); setActionType('confirm'); setActionRole('buyer'); }}
                         >
                           确认收货
                         </Button>
@@ -295,13 +296,13 @@ const OrdersPage: React.FC = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => { setActionOrderId(order.id); setActionType('cancel'); }}
+                          onClick={() => { setActionOrderId(order.id); setActionType('cancel'); setActionRole('seller'); }}
                         >
                           取消订单
                         </Button>
                         <Button
                           size="sm"
-                          onClick={() => { setActionOrderId(order.id); setActionType('confirm'); }}
+                          onClick={() => { setActionOrderId(order.id); setActionType('confirm'); setActionRole('seller'); }}
                         >
                           交易已完成
                         </Button>
@@ -319,7 +320,9 @@ const OrdersPage: React.FC = () => {
       <Dialog open={!!actionOrderId} onOpenChange={(open) => { if (!open) { setActionOrderId(null); setActionType(null); } }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{actionType === 'cancel' ? '取消订单' : '确认收货'}</DialogTitle>
+            <DialogTitle>
+              {actionType === 'cancel' ? '取消订单' : actionRole === 'seller' ? '交易已完成' : '确认收货'}
+            </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             {actionType === 'cancel'
@@ -328,7 +331,7 @@ const OrdersPage: React.FC = () => {
           </p>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setActionOrderId(null); setActionType(null); }}>
-              返回
+              取消
             </Button>
             <Button
               variant={actionType === 'cancel' ? 'destructive' : 'default'}
@@ -336,7 +339,7 @@ const OrdersPage: React.FC = () => {
               disabled={actionSubmitting}
             >
               {actionSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {actionType === 'cancel' ? '确认取消' : '确认收货'}
+              {actionType === 'cancel' ? '确认取消' : '确认'}
             </Button>
           </DialogFooter>
         </DialogContent>
