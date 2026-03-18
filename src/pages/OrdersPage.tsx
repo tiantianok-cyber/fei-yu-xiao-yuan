@@ -320,7 +320,9 @@ const OrdersPage: React.FC = () => {
       <Dialog open={!!actionOrderId} onOpenChange={(open) => { if (!open) { setActionOrderId(null); setActionType(null); } }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{actionType === 'cancel' ? '取消订单' : '确认收货'}</DialogTitle>
+            <DialogTitle>
+              {actionType === 'cancel' ? '取消订单' : actionRole === 'seller' ? '交易已完成' : '确认收货'}
+            </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             {actionType === 'cancel'
@@ -329,7 +331,7 @@ const OrdersPage: React.FC = () => {
           </p>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setActionOrderId(null); setActionType(null); }}>
-              返回
+              取消
             </Button>
             <Button
               variant={actionType === 'cancel' ? 'destructive' : 'default'}
@@ -337,7 +339,7 @@ const OrdersPage: React.FC = () => {
               disabled={actionSubmitting}
             >
               {actionSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {actionType === 'cancel' ? '确认取消' : '确认收货'}
+              {actionType === 'cancel' ? '确认取消' : '确认'}
             </Button>
           </DialogFooter>
         </DialogContent>
