@@ -394,36 +394,7 @@ const OrdersPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Review dialog */}
-      <Dialog open={!!reviewOrderId} onOpenChange={(open) => { if (!open) setReviewOrderId(null); }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>评价{reviewRole === 'buyer' ? '卖家' : '买家'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <ScoreSelector label="合作态度" value={cooperationScore} onChange={setCooperationScore} />
-            {reviewRole === 'buyer' && (
-              <ScoreSelector label="描述相符" value={descriptionMatchScore} onChange={setDescriptionMatchScore} />
-            )}
-            <div className="space-y-1.5">
-              <Label>评价内容（选填）</Label>
-              <Textarea
-                value={reviewContent}
-                onChange={(e) => setReviewContent(e.target.value)}
-                placeholder="写点什么..."
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setReviewOrderId(null)}>取消</Button>
-            <Button onClick={handleReviewSubmit} disabled={reviewSubmitting}>
-              {reviewSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              提交评价
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Review dialog disabled */}
     </div>
   );
 };
