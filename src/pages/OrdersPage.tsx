@@ -191,59 +191,7 @@ const OrdersPage: React.FC = () => {
     loadOrders();
   };
 
-  const openReview = (order: Order) => {
-    const isBuyer = order.buyer_id === user?.id;
-    setReviewOrderId(order.id);
-    setReviewRole(isBuyer ? 'buyer' : 'seller');
-    setReviewTarget(isBuyer ? order.seller_id : order.buyer_id);
-    setCooperationScore(5);
-    setDescriptionMatchScore(5);
-    setReviewContent('');
-  };
-
-  const handleReviewSubmit = async () => {
-    if (!reviewOrderId || !user) return;
-    setReviewSubmitting(true);
-
-    const { error } = await supabase.from('reviews').insert({
-      order_id: reviewOrderId,
-      reviewer_id: user.id,
-      reviewee_id: reviewTarget,
-      reviewer_role: reviewRole,
-      cooperation_score: cooperationScore,
-      description_match_score: reviewRole === 'buyer' ? descriptionMatchScore : null,
-      content: reviewContent.trim() || null,
-    });
-
-    if (error) {
-      toast({ title: '评价失败', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: '评价成功' });
-    }
-
-    setReviewSubmitting(false);
-    setReviewOrderId(null);
-    loadOrders();
-  };
-
-  const ScoreSelector: React.FC<{ value: number; onChange: (v: number) => void; label: string }> = ({ value, onChange, label }) => (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map(n => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => onChange(n)}
-            className={`text-xl transition-colors ${n <= value ? 'text-yellow-500' : 'text-muted'}`}
-          >
-            ★
-          </button>
-        ))}
-        <span className="text-sm text-muted-foreground ml-2 self-center">{value}分</span>
-      </div>
-    </div>
-  );
+  // Review functions disabled
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-6">
