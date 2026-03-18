@@ -77,6 +77,7 @@ const OrdersPage: React.FC = () => {
   // Cancel / confirm dialog
   const [actionOrderId, setActionOrderId] = useState<string | null>(null);
   const [actionType, setActionType] = useState<'cancel' | 'confirm' | null>(null);
+  const [actionRole, setActionRole] = useState<'buyer' | 'seller'>('buyer');
   const [actionSubmitting, setActionSubmitting] = useState(false);
 
   const loadOrders = async () => {
