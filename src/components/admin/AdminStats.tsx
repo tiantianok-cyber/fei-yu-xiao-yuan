@@ -78,7 +78,7 @@ const AdminStats: React.FC = () => {
   const [stats, setStats] = useState<Stats>({ userCount: 0, bookCount: 0, otherCount: 0, soldCount: 0, offShelfCount: 0, totalViews: 0 });
   const [bookTags, setBookTags] = useState<{ name: string; value: number }[]>([]);
   const [priceData, setPriceData] = useState<{ name: string; count: number }[]>([]);
-  const [reviewStats, setReviewStats] = useState<{ name: string; count: number }[]>([]);
+  // const [reviewStats, setReviewStats] = useState<{ name: string; count: number }[]>([]);
   const [cityData, setCityData] = useState<{ name: string; count: number }[]>([]);
   const [gradeData, setGradeData] = useState<{ name: string; count: number }[]>([]);
   const [loading, setLoading] = useState(true);
