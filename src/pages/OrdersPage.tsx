@@ -296,13 +296,13 @@ const OrdersPage: React.FC = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => { setActionOrderId(order.id); setActionType('cancel'); }}
+                          onClick={() => { setActionOrderId(order.id); setActionType('cancel'); setActionRole('seller'); }}
                         >
                           取消订单
                         </Button>
                         <Button
                           size="sm"
-                          onClick={() => { setActionOrderId(order.id); setActionType('confirm'); }}
+                          onClick={() => { setActionOrderId(order.id); setActionType('confirm'); setActionRole('seller'); }}
                         >
                           交易已完成
                         </Button>
