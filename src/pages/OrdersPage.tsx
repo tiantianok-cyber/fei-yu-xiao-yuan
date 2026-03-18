@@ -376,7 +376,7 @@ const OrdersPage: React.FC = () => {
           <p className="text-sm text-muted-foreground">
             {actionType === 'cancel'
               ? '取消后，物品将重新上架。确定取消吗？'
-              : '确认已收到物品并完成交易？'}
+              : '确认本次交易已完成？'}
           </p>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setActionOrderId(null); setActionType(null); }}>
