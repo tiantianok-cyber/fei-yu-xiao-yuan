@@ -42,7 +42,7 @@ interface Order {
   buyer_phone?: string;
   seller_phone?: string;
   items: OrderItem[];
-  has_reviewed?: boolean;
+  // has_reviewed?: boolean;
 }
 
 const Chip: React.FC<{ label: string; selected: boolean; onClick: () => void }> = ({ label, selected, onClick }) => (

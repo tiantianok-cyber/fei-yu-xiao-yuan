@@ -343,21 +343,7 @@ const AdminStats: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Review stats */}
-        <Card>
-          <CardHeader><CardTitle className="text-sm">评价统计</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={reviewStats}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="count" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        {/* Review stats disabled */}
       </div>
     </div>
   );

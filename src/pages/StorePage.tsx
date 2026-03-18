@@ -341,51 +341,7 @@ const StorePage: React.FC = () => {
           )}
         </div>
 
-        {/* Reviews Section */}
-        <div>
-          <h2 className="font-semibold text-foreground text-sm mb-3">
-            用户评价 {reviews.length > 0 && <span className="text-muted-foreground font-normal">({reviews.length})</span>}
-          </h2>
-          {reviews.length === 0 ? (
-            <div className="bg-card rounded-xl border border-border p-6 text-center text-muted-foreground text-sm">
-              暂无评价
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {reviews.map((review) => {
-                const reviewerName = reviewerNames[review.reviewer_id] || '匿名';
-                const roleLabel = review.reviewer_role === 'buyer' ? '买家' : '卖家';
-                const score = review.reviewer_role === 'buyer'
-                  ? (review.description_match_score ?? review.cooperation_score)
-                  : review.cooperation_score;
-                return (
-                  <div key={review.id} className="bg-card rounded-xl border border-border p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">{maskName(reviewerName)}</span>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">{roleLabel}</Badge>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <StarDisplay score={score} />
-                        <span className="text-xs text-muted-foreground">{score}分</span>
-                      </div>
-                    </div>
-                    {review.content ? (
-                      <p className="text-sm text-foreground">{review.content}</p>
-                    ) : (
-                      <p className="text-sm text-muted-foreground italic">
-                        {review.is_default ? '系统默认好评' : '该用户未留下文字评价'}
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {new Date(review.created_at).toLocaleDateString('zh-CN')}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        {/* Reviews Section disabled */}
       </div>
     </div>
   );
