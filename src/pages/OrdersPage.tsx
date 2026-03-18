@@ -65,14 +65,14 @@ const OrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Review dialog state
-  const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
-  const [reviewRole, setReviewRole] = useState<'buyer' | 'seller'>('buyer');
-  const [reviewTarget, setReviewTarget] = useState<string>('');
-  const [cooperationScore, setCooperationScore] = useState(5);
-  const [descriptionMatchScore, setDescriptionMatchScore] = useState(5);
-  const [reviewContent, setReviewContent] = useState('');
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  // Review dialog state (disabled)
+  // const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
+  // const [reviewRole, setReviewRole] = useState<'buyer' | 'seller'>('buyer');
+  // const [reviewTarget, setReviewTarget] = useState<string>('');
+  // const [cooperationScore, setCooperationScore] = useState(5);
+  // const [descriptionMatchScore, setDescriptionMatchScore] = useState(5);
+  // const [reviewContent, setReviewContent] = useState('');
+  // const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   // Cancel / confirm dialog
   const [actionOrderId, setActionOrderId] = useState<string | null>(null);
