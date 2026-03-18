@@ -343,27 +343,21 @@ const OrdersPage: React.FC = () => {
                       </>
                     )}
                     {order.status === 'trading' && isSeller && !isBuyer && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => { setActionOrderId(order.id); setActionType('cancel'); }}
-                      >
-                        取消订单
-                      </Button>
-                    )}
-                    {/* Completed → can review */}
-                    {order.status === 'completed' && !order.has_reviewed && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-primary text-primary hover:bg-primary/5"
-                        onClick={() => openReview(order)}
-                      >
-                        评价
-                      </Button>
-                    )}
-                    {order.status === 'completed' && order.has_reviewed && (
-                      <span className="text-xs text-muted-foreground self-center">已评价</span>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => { setActionOrderId(order.id); setActionType('cancel'); }}
+                        >
+                          取消订单
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => { setActionOrderId(order.id); setActionType('confirm'); }}
+                        >
+                          交易已完成
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
