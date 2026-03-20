@@ -84,15 +84,15 @@ const AdminProducts: React.FC = () => {
           className="max-w-xs"
         />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[120px]">
+          <SelectTrigger className="w-[140px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">全部状态</SelectItem>
-            <SelectItem value="on_sale">上架中</SelectItem>
-            <SelectItem value="in_trade">交易中</SelectItem>
-            <SelectItem value="sold">已售出</SelectItem>
-            <SelectItem value="off_shelf">已下架</SelectItem>
+            <SelectItem value="all">全部状态 ({products.length})</SelectItem>
+            <SelectItem value="on_sale">上架中 ({products.filter(p => p.status === 'on_sale').length})</SelectItem>
+            <SelectItem value="in_trade">交易中 ({products.filter(p => p.status === 'in_trade').length})</SelectItem>
+            <SelectItem value="sold">已售出 ({products.filter(p => p.status === 'sold').length})</SelectItem>
+            <SelectItem value="off_shelf">已下架 ({products.filter(p => p.status === 'off_shelf').length})</SelectItem>
           </SelectContent>
         </Select>
       </div>
