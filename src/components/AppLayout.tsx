@@ -24,7 +24,7 @@ export const AppLayout: React.FC = () => {
         <Outlet />
       </main>
       <footer className={`text-center text-xs text-muted-foreground py-4 ${isMobile ? 'pb-20' : ''}`}>
-        © 2026 飞呀飞&nbsp;&nbsp;&nbsp;渝ICP备 2026004126 号
+        © 2026 飞呀飞&nbsp;&nbsp;&nbsp;<a href="http://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">渝ICP备 2026004126 号</a>
       </footer>
       {isMobile && <BottomNav />}
     </div>
