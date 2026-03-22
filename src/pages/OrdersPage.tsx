@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Loader2 } from 'lucide-react';
+import { ClipboardList, Loader2, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -272,7 +272,48 @@ const OrdersPage: React.FC = () => {
                     <span className="text-sm text-muted-foreground">合计: </span>
                     <span className="text-primary font-bold">¥{total.toFixed(2)}</span>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap justify-end">
+                    {/* 卖了换钱 - only for completed bought orders */}
+                    {tab === 'bought' && order.status === 'completed' && order.items.map(item => (
+                      <Button
+                        key={`resell-${item.product_id}`}
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const { data: product } = await supabase
+                            .from('products')
+                            .select('*')
+                            .eq('id', item.product_id)
+                            .single();
+                          if (product) {
+                            sessionStorage.setItem('prefill_product', JSON.stringify({
+                              type: product.type,
+                              name: product.name,
+                              author: product.author,
+                              translator: product.translator,
+                              publisher: product.publisher,
+                              publish_date: product.publish_date,
+                              grade: product.grade,
+                              semester: product.semester,
+                              book_tag: product.book_tag,
+                              cover_image_url: product.cover_image_url,
+                              condition: product.condition,
+                              description: product.description,
+                              price: product.price,
+                              school: product.school,
+                            }));
+                            navigate(`/publish?type=${product.type}`);
+                          } else {
+                            toast({ title: '物品信息获取失败', variant: 'destructive' });
+                          }
+                        }}
+                      >
+                        <DollarSign className="h-3.5 w-3.5 mr-1" />
+                        卖了换钱
+                      </Button>
+                    ))}
                     {/* Trading → buyer can confirm or cancel; seller can cancel */}
                     {order.status === 'trading' && isBuyer && (
                       <>
