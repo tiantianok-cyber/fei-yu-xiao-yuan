@@ -317,47 +317,6 @@ const OrdersPage: React.FC = () => {
                     <span className="text-primary font-bold">¥{total.toFixed(2)}</span>
                   </div>
                   <div className="flex gap-2 flex-wrap justify-end">
-                    {/* 卖了换钱 - for completed orders where user is buyer */}
-                    {order.status === 'completed' && isBuyer && order.items.map(item => (
-                      <Button
-                        key={`resell-${item.product_id}`}
-                        size="sm"
-                        variant="outline"
-                        className="text-xs"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          const { data: product } = await supabase
-                            .from('products')
-                            .select('*')
-                            .eq('id', item.product_id)
-                            .single();
-                          if (product) {
-                            sessionStorage.setItem('prefill_product', JSON.stringify({
-                              type: product.type,
-                              name: product.name,
-                              author: product.author,
-                              translator: product.translator,
-                              publisher: product.publisher,
-                              publish_date: product.publish_date,
-                              grade: product.grade,
-                              semester: product.semester,
-                              book_tag: product.book_tag,
-                              cover_image_url: product.cover_image_url,
-                              condition: product.condition,
-                              description: product.description,
-                              price: product.price,
-                              school: product.school,
-                            }));
-                            navigate(`/publish?type=${product.type}`);
-                          } else {
-                            toast({ title: '物品信息获取失败', variant: 'destructive' });
-                          }
-                        }}
-                      >
-                        <span className="mr-1 text-sm font-medium">¥</span>
-                        卖了换钱
-                      </Button>
-                    ))}
                     {/* Trading → buyer can confirm or cancel; seller can cancel */}
                     {order.status === 'trading' && isBuyer && (
                       <>
