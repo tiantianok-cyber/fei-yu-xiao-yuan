@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Loader2, DollarSign } from 'lucide-react';
+import { ClipboardList, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -273,8 +273,8 @@ const OrdersPage: React.FC = () => {
                     <span className="text-primary font-bold">¥{total.toFixed(2)}</span>
                   </div>
                   <div className="flex gap-2 flex-wrap justify-end">
-                    {/* 卖了换钱 - only for completed bought orders */}
-                    {tab === 'bought' && order.status === 'completed' && order.items.map(item => (
+                    {/* 卖了换钱 - for completed orders where user is buyer */}
+                    {order.status === 'completed' && isBuyer && order.items.map(item => (
                       <Button
                         key={`resell-${item.product_id}`}
                         size="sm"
@@ -310,7 +310,7 @@ const OrdersPage: React.FC = () => {
                           }
                         }}
                       >
-                        <DollarSign className="h-3.5 w-3.5 mr-1" />
+                        <span className="mr-1 text-sm font-medium">¥</span>
                         卖了换钱
                       </Button>
                     ))}
